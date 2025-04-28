@@ -1,0 +1,74 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Add New Organization</title>
+    <style>
+        .form-group {
+            margin-bottom: 15px;
+        }
+        label {
+            display: block;
+            margin-bottom: 5px;
+        }
+        input[type="text"], input[type="url"] {
+            width: 300px;
+            padding: 5px;
+        }
+    </style>
+</head>
+<body>
+<h1>Add New Organization</h1>
+<form action="addOrganization" method="POST">
+    <div class="form-group">
+        <label for="name">Organization Name*:</label>
+        <input type="text" id="name" name="name" required>
+    </div>
+
+    <div class="form-group">
+        <label for="logo">Logo URL*:</label>
+        <input type="url" id="logo" name="logo" required>
+    </div>
+
+    <div class="form-group">
+        <label for="website">Website*:</label>
+        <input type="url" id="website" name="website" required>
+    </div>
+
+    <div class="form-group">
+        <label for="volunteerPage">Volunteer Page*:</label>
+        <input type="url" id="volunteerPage" name="volunteerPage" required>
+    </div>
+    <div class="form-group">
+        <label for="contactName">Contact Name:</label>
+        <input type="text" id="contactName" name="contactName"  >
+    </div>
+
+    <div class="form-group">
+        <label for="address">Address:</label>
+        <input type="text" id="address" name="address"  >
+    </div>
+    <div class="form-group">
+        <label for="allowsCourtOrdered">Allows Court Ordered:</label>
+        <input type="text" id="allowsCourtOrdered" name="allowsCourtOrdered"  >
+    </div>
+    <div class="form-group">
+        <label for="phone">Phone Number*:</label>
+        <input type="tel"
+               id="phone"
+               name="phone"
+               pattern="^\(?([0-9]{3})\)?[-. ]?([0-9]{3})[-. ]?([0-9]{4})$"
+               placeholder="(123) 456-7890"
+               required>
+        <small>Format: (123) 456-7890 or 123-456-7890 or 1234567890</small>
+    </div>
+
+    <div class="form-group">
+        <label for="filters">Filters:</label>
+        <input type="text" id="filters" name="filters"  >
+    </div>
+
+    <button type="submit">Add Organization</button>
+    <button type="submit">Cancel</button>
+</form>
+</body>
+</html>
