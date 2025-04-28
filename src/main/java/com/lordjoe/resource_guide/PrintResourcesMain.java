@@ -15,7 +15,7 @@ public class PrintResourcesMain {
         try (Connection conn = DBConnect.getConnection();
              Statement stmt = conn.createStatement()) {
 
-            String sql = "SELECT category, subcategory, sub_subcategory, name, description, " +
+            String sql = "SELECT category, subcategory,   name, description, " +
                     "       (SELECT url FROM resource_urls WHERE resource_id = r.id LIMIT 1) as website " +
                     "FROM community_resources r ORDER BY category, subcategory, sub_subcategory, name";
 
