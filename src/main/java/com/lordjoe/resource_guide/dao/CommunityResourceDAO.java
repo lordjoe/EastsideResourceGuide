@@ -7,10 +7,44 @@ import java.sql.Connection;
 import java.sql.PreparedStatement;
 import java.sql.ResultSet;
 import java.sql.SQLException;
+import java.util.*;
 
 import static com.lordjoe.resource_guide.util.StringUtils.truncate;
 public class CommunityResourceDAO {
 
+
+    public static List<CommunityResource> loadAllResources() throws SQLException {
+        List<CommunityResource> resources = new ArrayList<>();
+
+        String sql = "SELECT cr.id, cr.category, cr.subcategory, cr.name, cr.description, " +
+                "cr.address_line1, cr.phone_primary, cr.email, cr.hours, ru.url AS website " +
+                "FROM community_resources cr " +
+                "LEFT JOIN resource_urls ru ON cr.id = ru.resource_id AND ru.url_type = 'main' " +
+                "ORDER BY cr.category, cr.subcategory, cr.name";
+
+        try (Connection conn = DBConnect.getConnection();
+             PreparedStatement ps = conn.prepareStatement(sql);
+             ResultSet rs = ps.executeQuery()) {
+
+            while (rs.next()) {
+                CommunityResource resource = new CommunityResource();
+                resource.setId(rs.getInt("id"));
+                resource.setCategory(rs.getString("category"));
+                resource.setSubcategory(rs.getString("subcategory"));
+                resource.setName(rs.getString("name"));
+                resource.setDescription(rs.getString("description"));
+                resource.setAddressLine1(rs.getString("address_line1"));
+                resource.setPhonePrimary(rs.getString("phone_primary"));
+                resource.setEmail(rs.getString("email"));
+                resource.setHours(rs.getString("hours"));
+                resource.setWebsite(rs.getString("website"));  // <-- NEW
+
+                resources.add(resource);
+            }
+        }
+
+        return resources;
+    }
 
     public static int insert(CommunityResource resource) throws SQLException {
         String sql = """

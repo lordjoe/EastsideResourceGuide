@@ -16,7 +16,7 @@ public class StringUtils {
 
         filename = filename.replace("Copy of ","" );
         filename = filename.replace("COMPLETED","" );
-        filename = filename.replace(" - ","" );
+        filename = filename.replace("-","" );
         filename.trim();
         
         int dotIndex = filename.lastIndexOf('.');

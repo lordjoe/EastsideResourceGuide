@@ -17,7 +17,7 @@ public class CommunityResource {
     private String website;
     private String notes;
     private String subSubcategory;
-
+ 
     public String getSubSubcategory() {
         return subSubcategory;
     }
