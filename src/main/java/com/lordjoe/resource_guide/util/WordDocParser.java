@@ -1,6 +1,5 @@
 package com.lordjoe.resource_guide.util;
 
-import com.lordjoe.resource_guide.dao.CategoryDescriptionDAO;
 import com.lordjoe.resource_guide.dao.CommunityResourceDAO;
 import com.lordjoe.resource_guide.dao.ResourceUrlDAO;
 import com.lordjoe.resource_guide.model.CommunityResource;
@@ -19,26 +18,19 @@ import java.util.regex.Pattern;
 public class WordDocParser {
 
     private static final Pattern PHONE_PATTERN = Pattern.compile("\\(\\d{3}\\)\\s*\\d{3}-\\d{4}");
-    private static final Pattern EMAIL_PATTERN = Pattern.compile("\\b[A-Za-z0-9._%+-]+@[A-Za-z0-9.-]+\\.[A-Z|a-z]{2,}\\b");
-    private static final Pattern URL_PATTERN = Pattern.compile("https?://\\S+");
-    private static final Pattern ADDRESS_PATTERN = Pattern.compile(".*\\d+\\s+.*(St|Street|Ave|Avenue|Blvd|Boulevard|Rd|Road|Dr|Drive|Ct|Court|Pl|Place|Ln|Lane).*");
+    private static final Pattern EMAIL_PATTERN = Pattern.compile("\\b[A-Za-z0-9._%+-]+@[A-Za-z0-9.-]+\\.[A-Za-z]{2,}\\b");
+    private static final Pattern URL_PATTERN = Pattern.compile("https?://\\S+|www\\.\\S+");
+    private static final Pattern HOURS_PATTERN = Pattern.compile("(?i).*\\b(mon|tue|wed|thu|fri|sat|sun)\\b.*");
 
     private static String currentCategory = null;
     private static String currentSubcategory = null;
-    private static boolean foundFirstOrg = false;
-    private static StringBuilder pendingCategoryDescription = new StringBuilder();
-    private static StringBuilder pendingSubcategoryDescription = new StringBuilder();
 
     public static void parseAndInsertDocx(File filepath) throws Exception {
-        String name = filepath.getName();
-        if (name.startsWith(".~lock"))
-            return;
+        String filename = filepath.getName();
+        if (filename.startsWith(".~lock"))
+            return; // Skip temp files
 
-        currentCategory = getCategoryName(name);
-        currentSubcategory = null;
-        foundFirstOrg = false;
-        pendingCategoryDescription.setLength(0);
-        pendingSubcategoryDescription.setLength(0);
+        currentCategory = getCategoryName(filename);
 
         try (InputStream fis = new FileInputStream(filepath);
              XWPFDocument document = new XWPFDocument(fis)) {
@@ -51,32 +43,20 @@ public class WordDocParser {
                 if (text.isEmpty())
                     continue;
 
-                if (isFullyBold(para)) {
-                    if (!foundFirstOrg) {
-                        if (pendingCategoryDescription.length() > 0) {
-                            saveCategoryDescription(currentCategory, null, pendingCategoryDescription.toString());
-                        }
-                    } else if (pendingSubcategoryDescription.length() > 0 && currentSubcategory != null) {
-                        saveCategoryDescription(currentCategory, currentSubcategory, pendingSubcategoryDescription.toString());
-                    }
+                boolean isHeading2 = "Heading2".equals(para.getStyle());
+                boolean isFullyBold = para.getRuns().stream().allMatch(run -> run.isBold());
+                boolean isBlackText = para.getRuns().stream().allMatch(run -> {
+                    String color = run.getColor();
+                    return color == null || color.equalsIgnoreCase("000000");
+                });
 
+                if (isHeading2) {
                     currentSubcategory = text;
-                    foundFirstOrg = true;
-                    pendingSubcategoryDescription.setLength(0);
                     continue;
                 }
 
-                if (!foundFirstOrg) {
-                    pendingCategoryDescription.append(text).append(" ");
-                    continue;
-                }
-
-                if (currentSubcategory != null && !foundFirstOrg) {
-                    pendingSubcategoryDescription.append(text).append(" ");
-                    continue;
-                }
-
-                if (looksLikeOrganizationName(text)) {
+                if (isFullyBold && isBlackText) {
+                    // New Resource
                     if (currentResource != null) {
                         saveCurrentResource(currentResource);
                     }
@@ -84,28 +64,29 @@ public class WordDocParser {
                     currentResource.setCategory(currentCategory);
                     currentResource.setSubcategory(currentSubcategory);
                     currentResource.setName(text);
-                } else if (currentResource != null) {
-                    Matcher phoneMatcher = PHONE_PATTERN.matcher(text);
-                    Matcher urlMatcher = URL_PATTERN.matcher(text);
-                    Matcher emailMatcher = EMAIL_PATTERN.matcher(text);
-                    Matcher addressMatcher = ADDRESS_PATTERN.matcher(text);
+                    continue;
+                }
 
-                    if (phoneMatcher.find() && currentResource.getPhonePrimary() == null) {
-                        currentResource.setPhonePrimary(phoneMatcher.group());
-                    }
-                    if (urlMatcher.find() && currentResource.getWebsite() == null) {
-                        currentResource.setWebsite(urlMatcher.group());
-                    }
-                    if (emailMatcher.find() && currentResource.getEmail() == null) {
-                        currentResource.setEmail(emailMatcher.group());
-                    }
-                    if (addressMatcher.find() && currentResource.getAddressLine1() == null) {
-                        currentResource.setAddressLine1(addressMatcher.group());
-                    }
-                    if (currentResource.getDescription() == null) {
-                        currentResource.setDescription(text);
+                if (currentResource != null) {
+                    if (isPhoneNumber(text)) {
+                        currentResource.setPhonePrimary(extractPhone(text));
+                    } else if (isUrl(text)) {
+                        currentResource.setWebsite(extractUrl(text));
+                    } else if (isEmail(text)) {
+                        currentResource.setEmail(extractEmail(text));
+                    } else if (isHours(text)) {
+                        if (currentResource.getNotes() == null) {
+                            currentResource.setNotes(text);
+                        } else {
+                            currentResource.setNotes(currentResource.getNotes() + " " + text);
+                        }
                     } else {
-                        currentResource.setDescription(currentResource.getDescription() + " " + text);
+                        // Append to description
+                        if (currentResource.getDescription() == null) {
+                            currentResource.setDescription(text);
+                        } else {
+                            currentResource.setDescription(currentResource.getDescription() + " " + text);
+                        }
                     }
                 }
             }
@@ -116,10 +97,6 @@ public class WordDocParser {
         }
     }
 
-    private static boolean isFullyBold(XWPFParagraph para) {
-        return para.getRuns().stream().allMatch(r -> r.isBold());
-    }
-
     private static void saveCurrentResource(CommunityResource resource) throws SQLException {
         int resourceId = CommunityResourceDAO.insert(resource);
         if (resource.getWebsite() != null) {
@@ -128,13 +105,35 @@ public class WordDocParser {
         }
     }
 
-    private static void saveCategoryDescription(String category, String subcategory, String text) throws SQLException {
-        if (text == null || text.trim().isEmpty()) return;
-        CategoryDescriptionDAO.insert(category, subcategory, text.trim());
+    private static boolean isPhoneNumber(String text) {
+        return PHONE_PATTERN.matcher(text).find();
     }
 
-    private static boolean looksLikeOrganizationName(String text) {
-        return !text.contains("@") && !text.matches(".*\\d{5}.*");
+    private static boolean isUrl(String text) {
+        return URL_PATTERN.matcher(text).find();
+    }
+
+    private static boolean isEmail(String text) {
+        return EMAIL_PATTERN.matcher(text).find();
+    }
+
+    private static boolean isHours(String text) {
+        return HOURS_PATTERN.matcher(text).find();
+    }
+
+    private static String extractPhone(String text) {
+        Matcher matcher = PHONE_PATTERN.matcher(text);
+        return matcher.find() ? matcher.group() : null;
+    }
+
+    private static String extractUrl(String text) {
+        Matcher matcher = URL_PATTERN.matcher(text);
+        return matcher.find() ? matcher.group() : null;
+    }
+
+    private static String extractEmail(String text) {
+        Matcher matcher = EMAIL_PATTERN.matcher(text);
+        return matcher.find() ? matcher.group() : null;
     }
 
     private static String getCategoryName(String filename) {
