@@ -1,6 +1,6 @@
 package com.lordjoe.resource_guide;
 
-import com.lordjoe.viva.DBConnect;
+import com.lordjoe.resource_guide.util.DatabaseConnection;
 
 import java.sql.Connection;
 import java.sql.PreparedStatement;
@@ -10,7 +10,7 @@ import java.sql.SQLException;
 public class PrintOrganizationsMain {
 
     public static void main(String[] args) throws Exception {
-        try (Connection conn = DBConnect.getConnection()) {
+        try (Connection conn = DatabaseConnection.getConnection()) {
 
             // First, read main organizations
             String sql = """

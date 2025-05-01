@@ -1,146 +1,120 @@
 package com.lordjoe.resource_guide.util;
 
-import com.lordjoe.resource_guide.dao.CommunityResourceDAO;
-import com.lordjoe.resource_guide.dao.ResourceUrlDAO;
-import com.lordjoe.resource_guide.model.CommunityResource;
-import com.lordjoe.resource_guide.model.ResourceUrl;
+import com.lordjoe.resource_guide.Catagory;
 import org.apache.poi.xwpf.usermodel.XWPFDocument;
 import org.apache.poi.xwpf.usermodel.XWPFParagraph;
 
 import java.io.File;
 import java.io.FileInputStream;
 import java.io.InputStream;
-import java.sql.SQLException;
 import java.util.List;
-import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
 public class WordDocParser {
 
-    private static final Pattern PHONE_PATTERN = Pattern.compile("\\(\\d{3}\\)\\s*\\d{3}-\\d{4}");
-    private static final Pattern EMAIL_PATTERN = Pattern.compile("\\b[A-Za-z0-9._%+-]+@[A-Za-z0-9.-]+\\.[A-Za-z]{2,}\\b");
+    private static final Pattern PHONE_PATTERN = Pattern.compile("\\(\\d{3}\\) \\d{3}-\\d{4}");
+    private static final Pattern EMAIL_PATTERN = Pattern.compile("\\b[A-Za-z0-9._%+-]+@[A-Za-z0-9.-]+\\.[A-Za-z]{2,6}\\b");
     private static final Pattern URL_PATTERN = Pattern.compile("https?://\\S+|www\\.\\S+");
-    private static final Pattern HOURS_PATTERN = Pattern.compile("(?i).*\\b(mon|tue|wed|thu|fri|sat|sun)\\b.*");
+    private static final Pattern ADDRESS_PATTERN = Pattern.compile(".*\\d+\\s+.*(St|Street|Ave|Avenue|Blvd|Road|Rd|Dr|Drive|Ct|Court|Pl|Place|Ln|Lane).*", Pattern.CASE_INSENSITIVE);
 
-    private static String currentCategory = null;
-    private static String currentSubcategory = null;
+    private static boolean inBlock = false;
+    private static StringBuilder blockBuffer = new StringBuilder();
 
-    public static void parseAndInsertDocx(File filepath) throws Exception {
-        String filename = filepath.getName();
-        if (filename.startsWith(".~lock"))
-            return; // Skip temp files
+    private static int currentCategoryId = -1;
+    private static int currentSubcategoryId = -1;
+    private static int currentResourceId = -1;
 
-        currentCategory = getCategoryName(filename);
+    public static void parseAndInsertDocx(File file) throws Exception {
+        if (file.getName().startsWith(".~lock")) return;
 
-        try (InputStream fis = new FileInputStream(filepath);
+        try (InputStream fis = new FileInputStream(file);
              XWPFDocument document = new XWPFDocument(fis)) {
 
-            List<XWPFParagraph> paragraphs = document.getParagraphs();
-            CommunityResource currentResource = null;
+            String categoryName = file.getName().replace("_", " ").replace(".docx", "").trim();
+            Catagory catagory = CategoryUtils.CreateCatagory(categoryName);
+              currentCategoryId = catagory.getId();
 
+            List<XWPFParagraph> paragraphs = document.getParagraphs();
             for (XWPFParagraph para : paragraphs) {
                 String text = para.getText().trim();
-                if (text.isEmpty())
-                    continue;
+                if (text.isEmpty()) continue;
 
-                boolean isHeading2 = "Heading2".equals(para.getStyle());
-                boolean isFullyBold = para.getRuns().stream().allMatch(run -> run.isBold());
-                boolean isBlackText = para.getRuns().stream().allMatch(run -> {
-                    String color = run.getColor();
-                    return color == null || color.equalsIgnoreCase("000000");
-                });
-
-                if (isHeading2) {
-                    currentSubcategory = text;
+                if (text.equalsIgnoreCase("[BLOCK_START]")) {
+                    inBlock = true;
+                    blockBuffer.setLength(0);
                     continue;
                 }
 
-                if (isFullyBold && isBlackText) {
-                    // New Resource
-                    if (currentResource != null) {
-                        saveCurrentResource(currentResource);
-                    }
-                    currentResource = new CommunityResource();
-                    currentResource.setCategory(currentCategory);
-                    currentResource.setSubcategory(currentSubcategory);
-                    currentResource.setName(text);
+//                if (text.equalsIgnoreCase("[BLOCK_END]")) {
+//                    inBlock = false;
+//                    saveBlock();
+//                    continue;
+//                }
+
+                if (inBlock) {
+                    blockBuffer.append(text).append("\n");
                     continue;
                 }
 
-                if (currentResource != null) {
-                    if (isPhoneNumber(text)) {
-                        currentResource.setPhonePrimary(extractPhone(text));
-                    } else if (isUrl(text)) {
-                        currentResource.setWebsite(extractUrl(text));
-                    } else if (isEmail(text)) {
-                        currentResource.setEmail(extractEmail(text));
-                    } else if (isHours(text)) {
-                        if (currentResource.getNotes() == null) {
-                            currentResource.setNotes(text);
-                        } else {
-                            currentResource.setNotes(currentResource.getNotes() + " " + text);
-                        }
-                    } else {
-                        // Append to description
-                        if (currentResource.getDescription() == null) {
-                            currentResource.setDescription(text);
-                        } else {
-                            currentResource.setDescription(currentResource.getDescription() + " " + text);
-                        }
-                    }
-                }
-            }
+//                if (looksLikeSubcategory(para)) {
+//                    CommunityResource subcategory = new CommunityResource("SubCategory", currentCategoryId, text);
+//                    currentSubcategoryId = CommunityResourceDAO.insert(subcategory);
+//                    currentResourceId = -1;
+//                    continue;
+//                }
+//
+//                if (looksLikeResource(para)) {
+//                    CommunityResource resource = new CommunityResource("Resource",
+//                            currentSubcategoryId != -1 ? currentSubcategoryId : currentCategoryId,
+//                            text);
+//                    currentResourceId = CommunityResourceDAO.insert(resource);
+//                    continue;
+//                }
+//
+//                if (currentResourceId != -1) {
+//                    processResourceDetail(currentResourceId, text);
+//                } else {
+//                    // text before any subcat/resource => Category description
+//                    ResourceDescription desc = new ResourceDescription(currentCategoryId, text, false);
+//                    ResourceDescriptionDAO.insert(desc);
+//                }
+//            }
 
-            if (currentResource != null) {
-                saveCurrentResource(currentResource);
-            }
+
         }
     }
 
-    private static void saveCurrentResource(CommunityResource resource) throws SQLException {
-        int resourceId = CommunityResourceDAO.insert(resource);
-        if (resource.getWebsite() != null) {
-            ResourceUrl url = new ResourceUrl(resourceId, "main", resource.getWebsite());
-            ResourceUrlDAO.insert(url);
-        }
-    }
+//    private static void processResourceDetail(int resourceId, String text) throws Exception {
+//        if (PHONE_PATTERN.matcher(text).find()) {
+//            CommunityResourceDAO.updatePhone(resourceId, text);
+//        } else if (EMAIL_PATTERN.matcher(text).find()) {
+//            CommunityResourceDAO.updateEmail(resourceId, text);
+//        } else if (URL_PATTERN.matcher(text).find()) {
+//            CommunityResourceDAO.updateWebsite(resourceId, text);
+//        } else if (ADDRESS_PATTERN.matcher(text).find()) {
+//            CommunityResourceDAO.updateAddress(resourceId, text);
+//        } else {
+//            ResourceDescriptionDAO.insert(new ResourceDescription(resourceId, text, false));
+//        }
+//    }
 
-    private static boolean isPhoneNumber(String text) {
-        return PHONE_PATTERN.matcher(text).find();
-    }
+//    private static boolean looksLikeSubcategory(XWPFParagraph para) {
+//        return para.getStyle() != null && para.getStyle().equals("Heading2");
+//    }
+//
+//    private static boolean looksLikeResource(XWPFParagraph para) {
+//        return para.getRuns().stream().anyMatch(run -> run.isBold()) && !looksLikeSubcategory(para);
+//    }
+//
+//    private static void saveBlock() throws Exception {
+//        if (blockBuffer.length() > 0) {
+//            ResourceDescription block = new ResourceDescription(
+//                    (currentResourceId != -1 ? currentResourceId : (currentSubcategoryId != -1 ? currentSubcategoryId : currentCategoryId)),
+//                    blockBuffer.toString(),
+//                    true);
+//            ResourceDescriptionDAO.insert(block);
+//        }
+     }
+ 
 
-    private static boolean isUrl(String text) {
-        return URL_PATTERN.matcher(text).find();
-    }
-
-    private static boolean isEmail(String text) {
-        return EMAIL_PATTERN.matcher(text).find();
-    }
-
-    private static boolean isHours(String text) {
-        return HOURS_PATTERN.matcher(text).find();
-    }
-
-    private static String extractPhone(String text) {
-        Matcher matcher = PHONE_PATTERN.matcher(text);
-        return matcher.find() ? matcher.group() : null;
-    }
-
-    private static String extractUrl(String text) {
-        Matcher matcher = URL_PATTERN.matcher(text);
-        return matcher.find() ? matcher.group() : null;
-    }
-
-    private static String extractEmail(String text) {
-        Matcher matcher = EMAIL_PATTERN.matcher(text);
-        return matcher.find() ? matcher.group() : null;
-    }
-
-    private static String getCategoryName(String filename) {
-        filename = StringUtils.FileToCatagory(filename);
-        int dot = filename.indexOf('.');
-        if (dot > 0)
-            filename = filename.substring(0, dot);
-        return filename.replace('_', ' ').trim();
-    }
 }

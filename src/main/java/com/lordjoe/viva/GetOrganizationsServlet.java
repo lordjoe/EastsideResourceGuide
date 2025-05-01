@@ -1,5 +1,6 @@
 package com.lordjoe.viva;
 
+import com.lordjoe.resource_guide.util.DatabaseConnection;
 import jakarta.servlet.annotation.WebServlet;
 import jakarta.servlet.http.*;
 import java.io.*;
@@ -25,7 +26,7 @@ public class GetOrganizationsServlet extends HttpServlet {
         PrintWriter writer = resp.getWriter();
 
         try {
-             Connection connection = DBConnect.getConnection();
+             Connection connection = DatabaseConnection.getConnection();
 
             Statement stmt = connection.createStatement();
             ResultSet rs = stmt.executeQuery("SELECT   name FROM organizations");

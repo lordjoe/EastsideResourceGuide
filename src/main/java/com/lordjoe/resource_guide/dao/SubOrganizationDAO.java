@@ -1,7 +1,7 @@
 package com.lordjoe.resource_guide.dao;
 
 import com.lordjoe.resource_guide.SubOrganization;
-import com.lordjoe.viva.DBConnect;
+import com.lordjoe.resource_guide.util.DatabaseConnection;
 
 import java.sql.Connection;
 import java.sql.PreparedStatement;
@@ -32,7 +32,7 @@ public class SubOrganizationDAO {
                 notes
             ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)""";
 
-        try (Connection conn = DBConnect.getConnection();
+        try (Connection conn = DatabaseConnection.getConnection();
              PreparedStatement ps = conn.prepareStatement(sql)) {
 
             ps.setInt(1, subOrg.getParentResourceId());

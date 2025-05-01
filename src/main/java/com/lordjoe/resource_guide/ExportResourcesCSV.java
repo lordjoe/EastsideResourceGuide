@@ -7,7 +7,7 @@ package com.lordjoe.resource_guide;
  */
 
 
-import com.lordjoe.viva.DBConnect;
+import com.lordjoe.resource_guide.util.DatabaseConnection;
 
 import java.io.FileWriter;
 import java.sql.*;
@@ -32,7 +32,7 @@ public class ExportResourcesCSV {
 
         sql.append("ORDER BY category, subcategory, sub_subcategory, name");
 
-        try (Connection conn = DBConnect.getConnection();
+        try (Connection conn = DatabaseConnection.getConnection();
              Statement stmt = conn.createStatement();
              ResultSet rs = stmt.executeQuery(sql.toString());
              FileWriter writer = new FileWriter(fileName)) {

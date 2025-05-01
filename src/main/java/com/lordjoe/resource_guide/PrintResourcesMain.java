@@ -6,13 +6,13 @@ package com.lordjoe.resource_guide;
  * Date: 4/27/25
  */
 
-import com.lordjoe.viva.DBConnect;
+import com.lordjoe.resource_guide.util.DatabaseConnection;
 
 import java.sql.*;
 
 public class PrintResourcesMain {
     public static void main(String[] args) throws Exception {
-        try (Connection conn = DBConnect.getConnection();
+        try (Connection conn = DatabaseConnection.getConnection();
              Statement stmt = conn.createStatement()) {
 
             String sql = "SELECT category, subcategory,   name, description, " +

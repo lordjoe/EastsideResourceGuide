@@ -1,7 +1,7 @@
 package com.lordjoe.resource_guide.dao;
 
 import com.lordjoe.resource_guide.model.ResourceUrl;
-import com.lordjoe.viva.DBConnect;
+import com.lordjoe.resource_guide.util.DatabaseConnection;
 
 import java.sql.Connection;
 import java.sql.PreparedStatement;
@@ -15,7 +15,7 @@ public class ResourceUrlDAO {
             VALUES (?, ?, ?, FALSE, NULL, NULL, NULL)
         """;
 
-        try (Connection conn = DBConnect.getConnection();
+        try (Connection conn = DatabaseConnection.getConnection();
              PreparedStatement ps = conn.prepareStatement(sql)) {
 
             ps.setInt(1, url.getResourceId());

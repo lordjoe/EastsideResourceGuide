@@ -1,5 +1,6 @@
 package com.lordjoe.viva;
 
+import com.lordjoe.resource_guide.util.DatabaseConnection;
 import jakarta.servlet.annotation.WebServlet;
 import jakarta.servlet.http.*;
 import java.io.*;
@@ -19,7 +20,7 @@ public class DeleteOrganizationServlet extends HttpServlet {
         }
 
         try {
-              Connection connection = DBConnect.getConnection();
+              Connection connection = DatabaseConnection.getConnection();
 
             String sql = "DELETE FROM organizations WHERE name = ?";
             PreparedStatement stmt = connection.prepareStatement(sql);

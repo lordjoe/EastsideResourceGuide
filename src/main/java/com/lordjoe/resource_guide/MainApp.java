@@ -1,6 +1,7 @@
 package com.lordjoe.resource_guide;
 
 import com.lordjoe.resource_guide.util.WordDocParser;
+import com.lordjoe.resource_guide.util.DocParserUnclassifiedX;
 
 import java.io.File;
 
@@ -22,13 +23,21 @@ public class MainApp {
                 if(files!=null) {
                     for (int i = 0; i < files.length; i++) {
                         File f = files[i];
+                        if (f.getName().startsWith(".~lock"))
+                            continue;
                         System.out.println("Handling file " + f.getName());
-                        WordDocParser.parseAndInsertDocx(f);
-                    }
+                        if(f.getName().contains("Emerald")) {
+                            DocParserUnclassifiedX.parseDoc(f);
+                        }
+                        else {
+                            WordDocParser.parseAndInsertDocx(f);
+
+                        }
+                     }
                 }
             }
               System.out.println("Document parsed and inserted successfully.");
-            Database.validateAllURLs();
+          //  Database.validateAllURLs();
 
         } catch (Exception e) {
             e.printStackTrace();

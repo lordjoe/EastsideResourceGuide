@@ -1,86 +1,103 @@
 package com.lordjoe.resource_guide.dao;
 
 import com.lordjoe.resource_guide.model.CommunityResource;
-import com.lordjoe.viva.DBConnect;
+import com.lordjoe.resource_guide.util.DatabaseConnection;
 
-import java.sql.Connection;
-import java.sql.PreparedStatement;
-import java.sql.ResultSet;
-import java.sql.SQLException;
-import java.util.*;
+import java.sql.*;
+import java.util.ArrayList;
+import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
 
-import static com.lordjoe.resource_guide.util.StringUtils.truncate;
 public class CommunityResourceDAO {
 
+    public static int insert(CommunityResource resource) throws SQLException {
+        if(resource.getId() != 0) {
+            return resource.getId();
+        }
+        Connection conn = DatabaseConnection.getConnection();
+        PreparedStatement stmt = conn.prepareStatement(
+                "INSERT INTO community_resources (name, type, parent_id) VALUES (?, ?, ?) RETURNING id");
+        stmt.setString(1, resource.getName());
+        stmt.setString(2, resource.getType());
+        if (resource.getParentId() != null) {
+            stmt.setInt(3, resource.getParentId());
+        } else {
+            stmt.setNull(3, Types.INTEGER);
+        }
+        ResultSet rs = stmt.executeQuery();
+        if (rs.next()) {
+            return rs.getInt("id");
+        }
+        throw new SQLException("Insert failed, no ID obtained.");
+    }
 
-    public static List<CommunityResource> loadAllResources() throws SQLException {
-        List<CommunityResource> resources = new ArrayList<>();
 
-        String sql = "SELECT cr.id, cr.category, cr.subcategory, cr.name, cr.description, " +
-                "cr.address_line1, cr.phone_primary, cr.email, cr.hours, ru.url AS website " +
-                "FROM community_resources cr " +
-                "LEFT JOIN resource_urls ru ON cr.id = ru.resource_id AND ru.url_type = 'main' " +
-                "ORDER BY cr.category, cr.subcategory, cr.name";
 
-        try (Connection conn = DBConnect.getConnection();
-             PreparedStatement ps = conn.prepareStatement(sql);
-             ResultSet rs = ps.executeQuery()) {
+    public static Map<Integer, CommunityResource> loadAllAsMap() throws SQLException {
+        Map<Integer, CommunityResource> result = new HashMap<>();
+
+          String sql = "SELECT * FROM community_resources";
+        try (Connection conn = DatabaseConnection.getConnection();
+             PreparedStatement stmt = conn.prepareStatement(sql);
+             ResultSet rs = stmt.executeQuery()) {
 
             while (rs.next()) {
                 CommunityResource resource = new CommunityResource();
                 resource.setId(rs.getInt("id"));
-                resource.setCategory(rs.getString("category"));
-                resource.setSubcategory(rs.getString("subcategory"));
                 resource.setName(rs.getString("name"));
-                resource.setDescription(rs.getString("description"));
-                resource.setAddressLine1(rs.getString("address_line1"));
-                resource.setPhonePrimary(rs.getString("phone_primary"));
-                resource.setEmail(rs.getString("email"));
-                resource.setHours(rs.getString("hours"));
-                resource.setWebsite(rs.getString("website"));  // <-- NEW
+                resource.setType(rs.getString("type"));
+                resource.setParentId(rs.getObject("parent_id") != null ? rs.getInt("parent_id") : null);
 
-                resources.add(resource);
+                result.put(resource.getId(), resource);
             }
         }
-
-        return resources;
+        return result;
     }
 
-    public static int insert(CommunityResource resource) throws SQLException {
-        String sql = """
-        INSERT INTO community_resources 
-        (category, subcategory, name, description, address_line1, address_line2, city, state, zip_code, phone_primary, phone_secondary, email, hours, notes) 
-        VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?) 
-        RETURNING id
-    """;
 
-        try (Connection conn = DBConnect.getConnection();
-             PreparedStatement ps = conn.prepareStatement(sql)) {
+    public static  CommunityResource  getCommunityResource(String name) throws SQLException {
 
-            ps.setString(1, truncate(resource.getCategory(), 255));
-            ps.setString(2, truncate(resource.getSubcategory(), 255));
-            ps.setString(3, truncate(resource.getName(), 500));
-            ps.setString(4, resource.getDescription());
-            ps.setString(5, truncate(resource.getAddressLine1(), 500));
-            ps.setString(6, truncate(resource.getAddressLine2(), 500));
-            ps.setString(7, truncate(resource.getCity(), 255));
-            ps.setString(8, truncate(resource.getState(), 50));
-            ps.setString(9, truncate(resource.getZipCode(), 20));
-            ps.setString(10, truncate(resource.getPhonePrimary(), 50));
-            ps.setString(11, truncate(resource.getPhoneSecondary(), 50));
-            ps.setString(12, truncate(resource.getEmail(), 255));
-            ps.setString(13, resource.getHours());
-            ps.setString(14, resource.getNotes());
+        String sql = "SELECT * FROM community_resources where name = " + "name ";
+        try (Connection conn = DatabaseConnection.getConnection();
+             PreparedStatement stmt = conn.prepareStatement(sql);
+             ResultSet rs = stmt.executeQuery()) {
 
-            try (ResultSet rs = ps.executeQuery()) {
-                if (rs.next()) {
-                    int id = rs.getInt(1);
-                    resource.setId(id);
-                    return id;
-                } else {
-                    throw new SQLException("Failed to insert community resource, no ID returned.");
-                }
+            while (rs.next()) {
+                CommunityResource resource = new CommunityResource();
+                resource.setId(rs.getInt("id"));
+                resource.setName(rs.getString("name"));
+                resource.setType(rs.getString("type"));
+                resource.setParentId(rs.getObject("parent_id") != null ? rs.getInt("parent_id") : null);
+
+                return resource;
             }
+            return null;
         }
+      }
+
+
+
+    public static List<CommunityResource> loadAll() throws SQLException {
+        Connection conn = DatabaseConnection.getConnection();
+        PreparedStatement stmt = conn.prepareStatement("SELECT * FROM community_resources");
+        ResultSet rs = stmt.executeQuery();
+        List<CommunityResource> results = new ArrayList<>();
+        while (rs.next()) {
+            CommunityResource cr = new CommunityResource();
+            cr.setId(rs.getInt("id"));
+            cr.setName(rs.getString("name"));
+            cr.setType(rs.getString("type"));
+            int pid = rs.getInt("parent_id");
+            if (!rs.wasNull()) cr.setParentId(pid);
+            results.add(cr);
+        }
+        return results;
+    }
+
+    public static void deleteAll() throws SQLException {
+        Connection conn = DatabaseConnection.getConnection();
+        PreparedStatement stmt = conn.prepareStatement("DELETE FROM community_resources");
+        stmt.executeUpdate();
     }
 }

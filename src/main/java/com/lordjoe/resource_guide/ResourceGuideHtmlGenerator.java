@@ -1,6 +1,6 @@
 package com.lordjoe.resource_guide;
 
-import com.lordjoe.viva.DBConnect;
+import com.lordjoe.resource_guide.util.DatabaseConnection;
 import com.lordjoe.resource_guide.model.*;
 import java.io.File;
 import java.io.FileWriter;
@@ -68,16 +68,15 @@ public class ResourceGuideHtmlGenerator {
     private static List<CommunityResource> loadResources() throws Exception {
         List<CommunityResource> resources = new ArrayList<>();
 
-        try (Connection conn = DBConnect.getConnection();
-             PreparedStatement ps = conn.prepareStatement("SELECT * FROM community_resources ORDER BY category, subcategory, name");
+        try (Connection conn = DatabaseConnection.getConnection();
+             PreparedStatement ps = conn.prepareStatement("SELECT * FROM community_resources ORDER BY  name");
              ResultSet rs = ps.executeQuery()) {
 
             while (rs.next()) {
                 CommunityResource resource = new CommunityResource();
                 resource.setId(rs.getInt("id"));
-                resource.setCategory(rs.getString("category"));
-                resource.setSubcategory(rs.getString("subcategory"));
-                resource.setName(rs.getString("name"));
+                resource.setParentId(rs.getInt("parent_id"));
+                  resource.setName(rs.getString("name"));
                 resource.setDescription(rs.getString("description"));
                 resources.add(resource);
             }
@@ -89,7 +88,7 @@ public class ResourceGuideHtmlGenerator {
     private static List<CommunityResource> loadSubOrganizations(int parentId) throws Exception {
         List<CommunityResource> subs = new ArrayList<>();
 
-        try (Connection conn = DBConnect.getConnection();
+        try (Connection conn = DatabaseConnection.getConnection();
              PreparedStatement ps = conn.prepareStatement("SELECT * FROM sub_organizations WHERE parent_resource_id = ?")) {
             ps.setInt(1, parentId);
             try (ResultSet rs = ps.executeQuery()) {
@@ -118,7 +117,7 @@ public class ResourceGuideHtmlGenerator {
             return urls;
         }
 
-        try (Connection conn = DBConnect.getConnection();
+        try (Connection conn = DatabaseConnection.getConnection();
              PreparedStatement ps = conn.prepareStatement(sql)) {
 
             if (resourceId != null) {

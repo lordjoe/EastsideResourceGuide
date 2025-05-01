@@ -1,6 +1,7 @@
 package com.lordjoe.viva;
 
 
+import com.lordjoe.resource_guide.util.DatabaseConnection;
 import jakarta.servlet.annotation.WebServlet;
 import jakarta.servlet.http.*;
 import java.io.*;
@@ -103,7 +104,7 @@ public class AddOrganizationServlet extends HttpServlet {
 
         // If all validations pass, proceed with database insertion
         try {
-             Connection connection = DBConnect.getConnection();
+             Connection connection = DatabaseConnection.getConnection();
             Statement statement = connection.createStatement();
             ResultSet test = statement.executeQuery("SELECT * from organizations where name=" + name);
             if(test.isBeforeFirst()) {

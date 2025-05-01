@@ -1,85 +1,63 @@
 package com.lordjoe.resource_guide.model;
 
+import com.lordjoe.resource_guide.Catagory;
+
 public class CommunityResource {
+
     private int id;
-    private String category;
-    private String subcategory;
     private String name;
-    private String description;
+    private String type; // "Category", "SubCategory", "Resource", "Block"
+    private Integer parentId; // Nullable - null for top-level Categories
+
+    // Optional fields
+    private String phonePrimary;
+    private String phoneSecondary;
+    private String email;
+    private String website; // Comma-separated websites
     private String addressLine1;
     private String addressLine2;
     private String city;
     private String state;
     private String zipCode;
-    private String phonePrimary;
-    private String phoneSecondary;
-    private String email;
-    private String website;
-    private String notes;
-    private String subSubcategory;
-
-    public CommunityResource() {
-    }
-
-    public String getSubSubcategory() {
-        return subSubcategory;
-    }
-
-    public void setSubSubcategory(String subSubcategory) {
-        this.subSubcategory = subSubcategory;
-    }
 
     public String getHours() {
         return hours;
-    }
-
-    public String getNotes() {
-        return notes;
-    }
-
-    public void setNotes(String notes) {
-        this.notes = notes;
     }
 
     public void setHours(String hours) {
         this.hours = hours;
     }
 
-    public String getCity() {
-        return city;
-    }
-
-    public void setCity(String city) {
-        this.city = city;
-    }
-
     private String hours;
+    private String notes;
 
-    public String getZipCode() {
-        return zipCode;
+    public String getDescription() {
+        return description;
     }
 
-    public void setZipCode(String zipCode) {
-        this.zipCode = zipCode;
+    public void setDescription(String description) {
+        this.description = description;
     }
 
-    public String getState() {
-        return state;
+    private String description;
+
+    public CommunityResource() {
     }
 
-    public void setState(String state) {
-        this.state = state;
+    public CommunityResource(int id, String name, String type, Integer parentId) {
+        this.id = id;
+        this.name = name;
+        this.type = type;
+        this.parentId = parentId;
+    }
+    public CommunityResource(  String name, String type, Integer parentId) {
+        this(0,name,type,parentId);
+    }
+    public CommunityResource(  String name, String type, Catagory cat) {
+        this(0,name,type,cat.getId());
     }
 
-    public String getAddressLine2() {
-        return addressLine2;
-    }
-
-    public void setAddressLine2(String addressLine2) {
-        this.addressLine2 = addressLine2;
-    }
-
-
+    // Getters and Setters
 
     public int getId() {
         return id;
@@ -87,22 +65,6 @@ public class CommunityResource {
 
     public void setId(int id) {
         this.id = id;
-    }
-
-    public String getCategory() {
-        return category;
-    }
-
-    public void setCategory(String category) {
-        this.category = category;
-    }
-
-    public String getSubcategory() {
-        return subcategory;
-    }
-
-    public void setSubcategory(String subcategory) {
-        this.subcategory = subcategory;
     }
 
     public String getName() {
@@ -113,20 +75,20 @@ public class CommunityResource {
         this.name = name;
     }
 
-    public String getDescription() {
-        return description;
+    public String getType() {
+        return type;
     }
 
-    public void setDescription(String description) {
-        this.description = description;
+    public void setType(String type) {
+        this.type = type;
     }
 
-    public String getAddressLine1() {
-        return addressLine1;
+    public Integer getParentId() {
+        return parentId;
     }
 
-    public void setAddressLine1(String addressLine1) {
-        this.addressLine1 = addressLine1;
+    public void setParentId(Integer parentId) {
+        this.parentId = parentId;
     }
 
     public String getPhonePrimary() {
@@ -160,5 +122,52 @@ public class CommunityResource {
     public void setWebsite(String website) {
         this.website = website;
     }
-// Getters and Setters omitted for brevity
+
+    public String getAddressLine1() {
+        return addressLine1;
+    }
+
+    public void setAddressLine1(String addressLine1) {
+        this.addressLine1 = addressLine1;
+    }
+
+    public String getAddressLine2() {
+        return addressLine2;
+    }
+
+    public void setAddressLine2(String addressLine2) {
+        this.addressLine2 = addressLine2;
+    }
+
+    public String getCity() {
+        return city;
+    }
+
+    public void setCity(String city) {
+        this.city = city;
+    }
+
+    public String getState() {
+        return state;
+    }
+
+    public void setState(String state) {
+        this.state = state;
+    }
+
+    public String getZipCode() {
+        return zipCode;
+    }
+
+    public void setZipCode(String zipCode) {
+        this.zipCode = zipCode;
+    }
+
+    public String getNotes() {
+        return notes;
+    }
+
+    public void setNotes(String notes) {
+        this.notes = notes;
+    }
 }
