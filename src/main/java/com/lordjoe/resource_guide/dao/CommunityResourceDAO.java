@@ -19,7 +19,8 @@ public class CommunityResourceDAO {
         PreparedStatement stmt = conn.prepareStatement(
                 "INSERT INTO community_resources (name, type, parent_id) VALUES (?, ?, ?) RETURNING id");
         stmt.setString(1, resource.getName());
-        stmt.setString(2, resource.getType());
+        String string = resource.getType().toString();
+        stmt.setString(2, string);
         if (resource.getParentId() != null) {
             stmt.setInt(3, resource.getParentId());
         } else {
@@ -46,7 +47,7 @@ public class CommunityResourceDAO {
                 CommunityResource resource = new CommunityResource();
                 resource.setId(rs.getInt("id"));
                 resource.setName(rs.getString("name"));
-                resource.setType(rs.getString("type"));
+                resource.setType(ResourceType.Resource.valueOf(rs.getString("type")));
                 resource.setParentId(rs.getObject("parent_id") != null ? rs.getInt("parent_id") : null);
 
                 result.put(resource.getId(), resource);
@@ -67,7 +68,7 @@ public class CommunityResourceDAO {
                 CommunityResource resource = new CommunityResource();
                 resource.setId(rs.getInt("id"));
                 resource.setName(rs.getString("name"));
-                resource.setType(rs.getString("type"));
+                resource.setType(ResourceType.valueOf(rs.getString("type")));
                 resource.setParentId(rs.getObject("parent_id") != null ? rs.getInt("parent_id") : null);
 
                 return resource;
@@ -87,7 +88,7 @@ public class CommunityResourceDAO {
             CommunityResource cr = new CommunityResource();
             cr.setId(rs.getInt("id"));
             cr.setName(rs.getString("name"));
-            cr.setType(rs.getString("type"));
+            cr.setType(ResourceType.valueOf(rs.getString("type")));
             int pid = rs.getInt("parent_id");
             if (!rs.wasNull()) cr.setParentId(pid);
             results.add(cr);

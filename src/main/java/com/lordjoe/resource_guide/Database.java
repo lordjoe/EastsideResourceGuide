@@ -41,7 +41,7 @@ public class Database {
             CREATE TABLE community_resources (
                 id SERIAL PRIMARY KEY,
                 name TEXT NOT NULL,
-                type TEXT NOT NULL CHECK (type IN ('Category', 'SubCategory', 'Resource', 'Block')),
+                type TEXT NOT NULL CHECK (type IN ('Category', 'Subcategory', 'Resource', 'Block')),
                 parent_id INT REFERENCES community_resources(id)
             )
         """);
@@ -62,17 +62,12 @@ public class Database {
             CREATE TABLE resource_sites (
                 id SERIAL PRIMARY KEY,
                 resource_id INT NOT NULL REFERENCES community_resources(id) ON DELETE CASCADE,
-                address_line1 TEXT,
-                address_line2 TEXT,
-                city TEXT,
-                state TEXT,
-                zip_code TEXT,
-                phone_primary TEXT,
-                phone_secondary TEXT,
+                phone TEXT,         -- Multi-line or comma-separated
                 email TEXT,
-                website TEXT,  -- comma-separated URLs
+                website TEXT,       -- Comma-separated
+                address TEXT,       -- Multi-line
                 hours TEXT,
-               notes TEXT
+                notes TEXT
             )
         """);
 
@@ -81,99 +76,6 @@ public class Database {
     }
 
 
-    public static void createOldDatabase() throws Exception {
-        try (Connection conn = DatabaseConnection.getConnection();
-             Statement stmt = conn.createStatement()) {
-
-            System.out.println("Creating tables...");
-
-            // Main resources
-            stmt.executeUpdate("""
-                        CREATE TABLE community_resources (
-                            id SERIAL PRIMARY KEY,
-                            category VARCHAR(255),
-                            subcategory VARCHAR(255),
-                            name VARCHAR(500) NOT NULL,
-                            description TEXT,
-                            address_line1 VARCHAR(500),
-                            address_line2 VARCHAR(500),
-                            city VARCHAR(255),
-                            state VARCHAR(50),
-                            zip_code VARCHAR(20),
-                            phone_primary VARCHAR(50),
-                            phone_secondary VARCHAR(50),
-                            email VARCHAR(255),
-                            hours TEXT,
-                            notes TEXT
-                        )
-                    """);
-
-            // Sub-organizations
-            stmt.executeUpdate("""
-                        CREATE TABLE sub_organizations (
-                            id SERIAL PRIMARY KEY,
-                            parent_resource_id INTEGER NOT NULL REFERENCES community_resources(id) ON DELETE CASCADE,
-                            name VARCHAR(500) NOT NULL,
-                            description TEXT,
-                            address_line1 VARCHAR(500),
-                            address_line2 VARCHAR(500),
-                            city VARCHAR(255),
-                            state VARCHAR(50),
-                            zip_code VARCHAR(20),
-                            phone_primary VARCHAR(50),
-                            phone_secondary VARCHAR(50),
-                            email VARCHAR(255),
-                            hours TEXT,
-                            notes TEXT
-                        )
-                    """);
-
-            // Resource URLs
-            stmt.executeUpdate("""
-                        CREATE TABLE resource_urls (
-                            id SERIAL PRIMARY KEY,
-                            resource_id INTEGER REFERENCES community_resources(id) ON DELETE CASCADE,
-                            suborganization_id INTEGER REFERENCES sub_organizations(id) ON DELETE CASCADE,
-                            url_type VARCHAR(255),
-                            url TEXT NOT NULL,
-                            is_validated BOOLEAN DEFAULT FALSE,
-                            is_valid BOOLEAN,
-                            last_checked TIMESTAMP,
-                            notes TEXT
-                        )
-                    """);
-
-            // Extra properties
-            stmt.executeUpdate("""
-                        CREATE TABLE community_resource_properties (
-                            id SERIAL PRIMARY KEY,
-                            resource_id INTEGER NOT NULL REFERENCES community_resources(id) ON DELETE CASCADE,
-                            property_name VARCHAR(255) NOT NULL,
-                            property_value TEXT
-                        )
-                    """);
-
-            // Section mapping
-            stmt.executeUpdate("""
-                        CREATE TABLE community_resource_sections (
-                            id SERIAL PRIMARY KEY,
-                            section_name VARCHAR(255) NOT NULL,
-                            property_name VARCHAR(255) NOT NULL
-                        )
-                    """);
-
-            // category_descriptions
-            stmt.executeUpdate("""
-                        CREATE TABLE IF NOT EXISTS category_descriptions (
-                            id SERIAL PRIMARY KEY,
-                            category_name VARCHAR(255) NOT NULL,
-                            subcategory_name VARCHAR(255),
-                            description TEXT
-                        )
-                    """);
-            System.out.println("Tables created.");
-        }
-    }
 
     public static void validateAllURLs() throws Exception {
         try (Connection conn = DatabaseConnection.getConnection();

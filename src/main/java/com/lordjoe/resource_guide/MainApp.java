@@ -25,6 +25,7 @@ public class MainApp {
                         File f = files[i];
                         if (f.getName().startsWith(".~lock"))
                             continue;
+
                         System.out.println("Handling file " + f.getName());
                         if(f.getName().contains("Emerald")) {
                             DocParserUnclassifiedX.parseDoc(f);

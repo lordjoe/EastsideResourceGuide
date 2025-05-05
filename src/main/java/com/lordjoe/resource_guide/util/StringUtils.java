@@ -25,4 +25,30 @@ public class StringUtils {
         }
         return filename;
     }
+
+    /*
+        test two strings have equivalent text - can handle nulls
+     */
+    public static boolean equivalentText(String s1, String s2) {
+        if( s1 == null && s2 == null )
+            return true;
+        if( s1 == null && s2 != null )
+            return false;
+        return textOnly(s1).equals(textOnly(s2));
+    }
+
+    /*
+       convert a string to the printable parts = useful for
+       comparisons
+     */
+    public static String textOnly(String s) {
+        if(s == null) return null;
+        StringBuilder sb = new StringBuilder();
+        for(int i = 0; i < s.length(); i++) {
+            char c = s.charAt(i);
+            if(Character.isLetterOrDigit(c))
+                sb.append(c);
+        }
+        return sb.toString();
+    }
 }
