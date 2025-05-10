@@ -29,6 +29,7 @@ public class Database {
 
 
             System.out.println("Tables dropped.");
+            DatabaseConnection.clearConnection();
         }
     }
 
@@ -72,6 +73,7 @@ public class Database {
         """);
 
             System.out.println("Tables created.");
+            DatabaseConnection.clearConnection();
         }
     }
 
@@ -98,5 +100,6 @@ public class Database {
                 System.out.println("Validated URL: " + url + " - " + (valid ? "OK" : "FAILED"));
             }
         }
+        DatabaseConnection.clearConnection();
     }
 }

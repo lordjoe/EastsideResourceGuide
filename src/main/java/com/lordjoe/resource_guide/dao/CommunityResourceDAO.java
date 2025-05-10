@@ -15,23 +15,26 @@ public class CommunityResourceDAO {
         if(resource.getId() != 0) {
             return resource.getId();
         }
-        Connection conn = DatabaseConnection.getConnection();
-        PreparedStatement stmt = conn.prepareStatement(
-                "INSERT INTO community_resources (name, type, parent_id) VALUES (?, ?, ?) RETURNING id");
-        stmt.setString(1, resource.getName());
-        String string = resource.getType().toString();
-        stmt.setString(2, string);
-        if (resource.getParentId() != null) {
-            stmt.setInt(3, resource.getParentId());
-        } else {
-            stmt.setNull(3, Types.INTEGER);
-        }
-        ResultSet rs = stmt.executeQuery();
-        if (rs.next()) {
-            return rs.getInt("id");
-        }
-        throw new SQLException("Insert failed, no ID obtained.");
-    }
+        try (Connection conn = DatabaseConnection.getConnection()) {
+            PreparedStatement stmt = conn.prepareStatement(
+                    "INSERT INTO community_resources (name, type, parent_id) VALUES (?, ?, ?) RETURNING id");
+            stmt.setString(1, resource.getName());
+            String string = resource.getType().toString();
+            stmt.setString(2, string);
+            if (resource.getParentId() != null) {
+                stmt.setInt(3, resource.getParentId());
+            } else {
+                stmt.setNull(3, Types.INTEGER);
+            }
+            ResultSet rs = stmt.executeQuery();
+            if (rs.next()) {
+                DatabaseConnection.clearConnection();
+                return rs.getInt("id");
+            }
+            throw new SQLException("Insert failed, no ID obtained.");
+            // keep connection  open
+          }
+     }
 
 
 

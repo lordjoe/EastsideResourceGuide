@@ -47,6 +47,7 @@ public class ExportResourcesCSV {
                 writer.write(quote(rs.getString("description")) + ",");
                 writer.write(quote(rs.getString("website")) + "\n");
             }
+            DatabaseConnection.clearConnection();
         }
 
         System.out.println("CSV export complete: " + fileName);

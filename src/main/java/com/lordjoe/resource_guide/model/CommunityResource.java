@@ -73,27 +73,48 @@ public class CommunityResource {
 
     }
 
-    public static boolean equivalentText(CommunityResource r1, CommunityResource r2) {
-        if (r1.id != r2.id)
+    public static boolean equivalentText(CommunityResource r1, CommunityResource r2, boolean verbose ) {
+        if (r1.id != r2.id) {
+            if(verbose) System.out.println("Missd ID");
             return false;
-        if (!r1.name.equals(r2.name))
+        }
+        if (!r1.name.equals(r2.name)) {
+            if(verbose) System.out.println("Missd name");
             return false;
-        if (r1.type != r2.type)
+        }
+        if (r1.type != r2.type) {
+            if(verbose) System.out.println("Missd type");
             return false;
-        if (r1.parentId != r1.parentId)
+        }
+        if (r1.parentId != r1.parentId) {
+            if(verbose) System.out.println("Missd parentId");
             return false;
-        if (!StringUtils.equivalentText(r1.description, r2.description))
+        }
+        if (!StringUtils.equivalentText(r1.description, r2.description)) {
+            if(verbose) System.out.println("Missd description");
             return false;
-        if (!StringUtils.equivalentText(r1.address, r2.address))
+        }
+        if (!StringUtils.equivalentText(r1.address, r2.address)) {
+            StringUtils.equivalentText(r1.address, r2.address);
+            if(verbose) System.out.println("Missd address");
             return false;
-        if (!StringUtils.equivalentText(r1.hours, r2.hours))
+        }
+        if (!StringUtils.equivalentText(r1.hours, r2.hours)) {
+            if(verbose) System.out.println("Missd hours");
             return false;
-        if (!StringUtils.equivalentText(r1.notes, r2.notes))
+        }
+        if (!StringUtils.equivalentText(r1.notes, r2.notes)) {
+            if(verbose) System.out.println("Missd notes");
             return false;
-        if (!StringUtils.equivalentText(r1.email, r2.email))
+        }
+        if (!StringUtils.equivalentText(r1.email, r2.email)) {
+            if(verbose) System.out.println("Missd email");
             return false;
-        if (!StringUtils.equivalentText(r1.website, r2.website))
+        }
+        if (!StringUtils.equivalentText(r1.website, r2.website)) {
+            if(verbose) System.out.println("Missd website");
             return false;
+        }
 
         return true;   // they are equivcalewnt;
     }

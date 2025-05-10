@@ -10,12 +10,13 @@ import com.lordjoe.resource_guide.model.ResourceDescription;
 import com.lordjoe.resource_guide.model.ResourceSite;
 import org.apache.poi.xwpf.usermodel.XWPFDocument;
 import org.apache.poi.xwpf.usermodel.XWPFParagraph;
+import org.apache.poi.xwpf.usermodel.XWPFRun;
 
 import java.io.File;
 import java.io.FileInputStream;
 import java.io.InputStream;
-import java.util.ArrayList;
-import java.util.List;
+import java.sql.SQLException;
+import java.util.*;
 import java.util.regex.Pattern;
 
 public class WordDocParser {
@@ -23,102 +24,184 @@ public class WordDocParser {
     private static final Pattern PHONE_PATTERN = Pattern.compile("\\(\\d{3}\\) \\d{3}-\\d{4}");
     private static final Pattern EMAIL_PATTERN = Pattern.compile("\\b[A-Za-z0-9._%+-]+@[A-Za-z0-9.-]+\\.[A-Za-z]{2,6}\\b");
     private static final Pattern URL_PATTERN = Pattern.compile("https?://\\S+|www\\.\\S+");
-    private static final Pattern ADDRESS_PATTERN = Pattern.compile(
-            "^\\d+\\s+.+\\b(St|Street|Ave|Avenue|Blvd|Road|Rd|Dr|Drive|Ct|Court|Pl|Place|Ln|Lane)\\b.*",
-            Pattern.CASE_INSENSITIVE
-    );
-    private static final Pattern HOURS_PATTERN = Pattern.compile(
-            "(?i)\\b(?:mon(?:day)?|tue(?:sday)?|wed(?:nesday)?|thu(?:rsday)?|fri(?:day)?|sat(?:urday)?|sun(?:day)?)s?\\b[\\s,:-]*\\d{1,2}(?::\\d{2})?\\s*(?:AM|PM)?\\s*(?:-|to|–)\\s*\\d{1,2}(?::\\d{2})?\\s*(?:AM|PM)?"
-    );
+
+    private static Set<Integer> savedItems = null;
 
     public static void parseAndInsertDocx(File file) throws Exception {
         if (file.getName().startsWith(".~lock")) return;
+        if (!file.getName().endsWith(".docx")) return;
+        savedItems = new HashSet<>();
+
+        Stack<CommunityResource> resourceStack = new Stack<>();
+        Stack<List<String>> descriptions = new Stack<>();
 
         try (InputStream fis = new FileInputStream(file);
              XWPFDocument document = new XWPFDocument(fis)) {
 
             String categoryName = file.getName().replace("_", " ").replace(".docx", "").trim();
             Catagory category = CategoryUtils.CreateCatagory(categoryName);
-            int currentCategoryId = category.getId();
-            int currentSubcategoryId = -1;
-
-            CommunityResource currentResource = null;
-            List<String> currentDescriptions = new ArrayList<>();
-            List<String> phoneLines = new ArrayList<>();
-            List<String> addressLines = new ArrayList<>();
-            boolean readingDescription = false;
-            boolean readDescription = false;
-            boolean readingAddress = false;
-            boolean inBlock = false;
-            StringBuilder blockBuffer = new StringBuilder();
-
+            CommunityResource rs = new CommunityResource(category.getId(), categoryName, ResourceType.Category, null);
+             resourceStack.push(rs);
+            descriptions.push(new ArrayList<>());
             List<XWPFParagraph> paragraphs = document.getParagraphs();
-            for (XWPFParagraph para : paragraphs) {
-                String text = para.getText().trim();
-                if (text.isEmpty()) continue;
+            ParagraphIterator items = new ParagraphIterator(paragraphs);
 
-                if (text.equalsIgnoreCase("[BLOCK_START]")) {
+            handleItems(items, resourceStack,descriptions,false);
+        }
+    }
+
+    private static CommunityResource  insertResource( String name,ResourceType type, int parendId) throws SQLException {
+        CommunityResource rs = new CommunityResource( name, type, parendId);
+        int idx = CommunityResourceDAO.insert(rs);
+        rs.setId(idx);
+        return rs;
+    }
+
+    private static void handleItems(ParagraphIterator items,
+                                    Stack<CommunityResource> resourceStack, Stack<List<String>> descriptions,  boolean inList) throws Exception {
+        CommunityResource activeResource = resourceStack.lastElement();
+        List<String> currentDescriptions = descriptions.lastElement();
+        List<String> phoneLines = new ArrayList<>();
+        List<String> addressLines = new ArrayList<>();
+        boolean readingDescription = true;
+        boolean readDescription = false;
+        boolean readingAddress = false;
+        boolean inBlock = false;
+   //     printResourceStack(resourceStack);
+
+        try {
+            StringBuilder blockBuffer = new StringBuilder();
+            while (items.hasNext()) {
+                activeResource = resourceStack.lastElement();
+                currentDescriptions = descriptions.lastElement();
+                XWPFParagraph para = items.next();
+                String text = para.getText().trim();
+ 
+
+                if (text.isEmpty()) {
+                  //  items.next();
+                    continue;
+                }
+
+                if (isBlockStart(text)) {
                     inBlock = true;
                     blockBuffer.setLength(0);
                     continue;
                 }
 
-                if (text.equalsIgnoreCase("[BLOCK_END]")) {
+                if (isBlockEnd(text)) {
                     inBlock = false;
                     String blockText = blockBuffer.toString();
-                    if (currentResource == null) {
-                        int ownerId = currentSubcategoryId != -1 ? currentSubcategoryId : currentCategoryId;
-                        ResourceDescriptionDAO.insert(new ResourceDescription(ownerId, blockText, true));
-                    } else {
-                        currentDescriptions.add("[BLOCK]\n" + blockText);
-                    }
+                    currentDescriptions.add("[BLOCK]\n" + blockText);
+                      continue;
+                }
+
+                if (isListStart(text)) {
+                    // finished with top element
+                    saveResource(activeResource, currentDescriptions, phoneLines, addressLines);
+                    currentDescriptions.clear();
+                    phoneLines.clear();
+                    addressLines.clear();
+                    inBlock = false;
+                    inList = true;
                     continue;
                 }
 
+                if (isListEnd(text)) {
+                    inBlock = false;
+                    inList = false;
+                    saveResource(activeResource, currentDescriptions, phoneLines, addressLines);
+                    resourceStack.pop();
+                    descriptions.pop();
+                    continue;
+                 }
+
                 if (inBlock) {
-                    blockBuffer.append(text).append("\n");
+                    StringBuilder formatted = new StringBuilder("<p>");
+
+                    for (XWPFRun run : para.getRuns()) {
+                        String runText = run.text();
+
+                        if (runText != null && !runText.isBlank()) {
+                            if (run.isBold()) formatted.append("<b>");
+                            if (run.isItalic()) formatted.append("<i>");
+                            formatted.append(runText.replace("\n", "<br/>"));  // preserve internal line breaks
+                            if (run.isItalic()) formatted.append("</i>");
+                            if (run.isBold()) formatted.append("</b>");
+                        }
+                    }
+
+                    formatted.append("</p>\n");
+                    blockBuffer.append(formatParagraphAsHtml(para)).append("\n");
                     continue;
                 }
 
                 if (looksLikeSubcategory(para)) {
-                    saveResource(currentResource, currentDescriptions, phoneLines, addressLines);
-                    currentResource = new CommunityResource(text, ResourceType.Subcategory, currentCategoryId);
-                    currentSubcategoryId = CommunityResourceDAO.insert(currentResource);
-                    currentResource = null;
-                    currentDescriptions.clear();
-                    phoneLines.clear();
-                    addressLines.clear();
-                    readingAddress = false;
-                    readingDescription = false;
-                    readDescription = false;
-                    continue;
+                    if (activeResource.getType() == ResourceType.Resource) {
+                        saveResource(activeResource, currentDescriptions, phoneLines, addressLines);
+                        resourceStack.pop();
+                        descriptions.pop();
+                        items.push(para);
+                        return;
+                    }
+
+                    if (activeResource.getType() == ResourceType.Subcategory) {
+                        saveResource(activeResource, currentDescriptions, phoneLines, addressLines);
+                        resourceStack.pop();
+                        descriptions.pop();
+                        items.push(para);
+                        return;
+                    }
+                    if (activeResource.getType() == ResourceType.Category) {
+                        CommunityResource current = insertResource(text, ResourceType.Subcategory, activeResource.getId());
+                        resourceStack.push(current);
+                        descriptions.push(new ArrayList<>());
+                   //     items.next();
+                        handleItems(items, resourceStack,descriptions, false);
+                        continue;
+                    }
+
                 }
 
                 if (looksLikeResource(para)) {
-                    saveResource(currentResource, currentDescriptions, phoneLines, addressLines);
-                    currentResource = new CommunityResource(text, ResourceType.Resource,
-                            currentSubcategoryId != -1 ? currentSubcategoryId : currentCategoryId);
-                    currentDescriptions.clear();
-                    phoneLines.clear();
-                    addressLines.clear();
-                    readingAddress = false;
-                    readDescription = false;
-                    readingDescription = true; // Start assuming description
+
+                    if (activeResource.getType() == ResourceType.Resource) {
+
+                        if (inList) {
+                            CommunityResource current = insertResource(text, ResourceType.Resource, activeResource.getId());
+                            resourceStack.push(current);
+                            descriptions.push(new ArrayList<>());
+                            //       items.next();
+                            handleItems(items, resourceStack,descriptions, false);
+                            continue;
+                        } else {
+                            saveResource(activeResource, currentDescriptions, phoneLines, addressLines);
+                             resourceStack.pop();
+                            items.push(para);
+                            return;
+
+                        }
+                    }
+                    CommunityResource current = insertResource(text, ResourceType.Resource, activeResource.getId());
+
+                    resourceStack.push(current);
+                    descriptions.push(new ArrayList<>());
+                    handleItems(items, resourceStack,descriptions, inList);
                     continue;
                 }
 
                 // Main parsing logic
-                if (currentResource != null) {
+                if (activeResource != null) {
                     // If we're collecting description and hit a structured field, stop
                     if (readingDescription) {
                         if (PHONE_PATTERN.matcher(text).find() ||
                                 EMAIL_PATTERN.matcher(text).find() ||
                                 URL_PATTERN.matcher(text).find() ||
-                                HOURS_PATTERN.matcher(text).find() ||
-                                ADDRESS_PATTERN.matcher(text).find()) {
-                               readDescription = true;
-                               readingDescription = false;
+                                HoursHandler.isHours(text) ||
+                                AddressHandler.isAddress(text)) {
+                            readingDescription = false;
                         } else {
+                            readDescription = true;
                             currentDescriptions.add(text);
                             continue;
                         }
@@ -129,7 +212,7 @@ public class WordDocParser {
                         if (PHONE_PATTERN.matcher(text).find() ||
                                 EMAIL_PATTERN.matcher(text).find() ||
                                 URL_PATTERN.matcher(text).find() ||
-                                HOURS_PATTERN.matcher(text).find()) {
+                                HoursHandler.isHours(text) ) {
                             readingAddress = false;
                             // fall through to process as structured field
                         } else {
@@ -137,27 +220,27 @@ public class WordDocParser {
                             continue;
                         }
                     }
-                    if (ADDRESS_PATTERN.matcher(text).find()) {
+                    if (AddressHandler.isAddress(text) ) {
                         addressLines.add(text);
                         readingAddress = true;
                     } else if (PHONE_PATTERN.matcher(text).find()) {
                         phoneLines.add(text);
                     } else if (EMAIL_PATTERN.matcher(text).find()) {
                         String realEmail = text;
-                        if(realEmail.startsWith("Email:")) {
-                            realEmail = realEmail.replace("Email:","");
+                        if (realEmail.startsWith("Email:")) {
+                            realEmail = realEmail.replace("Email:", "");
                             realEmail = realEmail.trim();
                         }
-                        currentResource.setEmail(realEmail);
+                        activeResource.setEmail(realEmail);
                     } else if (URL_PATTERN.matcher(text).find()) {
-                        currentResource.setWebsite(text);
-                    } else if (HOURS_PATTERN.matcher(text).find()) {
-                        currentResource.setHours(text);
+                        activeResource.setWebsite(text);
+                    } else if (HoursHandler.isHours(text)) {
+                        activeResource.setHours(text);
                     } else {
-                        if(!readDescription)
+                        if (!readDescription)
                             currentDescriptions.add(text); // fallback if unmatched
                         else {
-                            if(addressLines.size()  == 0) {
+                            if (addressLines.size() == 0) {
                                 addressLines.add(text);
                                 readingAddress = true;
                             }
@@ -165,17 +248,46 @@ public class WordDocParser {
                     }
                 } else {
                     // Category-level description
-                    ResourceDescriptionDAO.insert(new ResourceDescription(currentCategoryId, text, false));
+                    ResourceDescriptionDAO.insert(new ResourceDescription(activeResource.getId(), text, false));
                 }
             }
-
-            // Final resource save
-            saveResource(currentResource, currentDescriptions, phoneLines, addressLines);
+            if(!resourceStack.isEmpty()) {
+                 activeResource = resourceStack.lastElement();
+                // Final resource save
+                saveResource(activeResource, currentDescriptions, phoneLines, addressLines);
+                resourceStack.pop();
+                descriptions.pop();
+            }
+        }
+        finally {
+   //         System.out.println("finished " + activeResource.getName());
+            while(!resourceStack.isEmpty()) {
+                int activeId = resourceStack.lastElement().getId();
+                if(activeId != activeResource.getId())
+                    break;
+                resourceStack.pop();
+                descriptions.pop();
+            }
         }
     }
 
+    private static void printResourceStack(Stack<CommunityResource> resourceStack) {
+        StringBuilder sb = new StringBuilder();
+        for(int i = 0; i < resourceStack.size(); i++) {
+            sb.append(resourceStack.get(i).getName());
+            sb.append("-->");
+        }
+          System.out.println(sb.toString());
+    }
+
+
     private static void saveResource(CommunityResource resource, List<String> descriptions,
                                      List<String> phoneLines, List<String> addressLines) throws Exception {
+        if(savedItems.contains(resource.getId()))
+            return;
+        savedItems.add(resource.getId());
+        String name = resource.getName();
+   //     System.out.println("Saving " + name);
         if (resource != null) {
             if (!phoneLines.isEmpty()) {
                 resource.setPhone(String.join("\n", phoneLines));
@@ -189,7 +301,7 @@ public class WordDocParser {
             for (String desc : descriptions) {
                 ResourceDescriptionDAO.insert(new ResourceDescription(id, desc, false));
             }
-            if(resource.hasSiteInfo())  {
+            if (resource.hasSiteInfo()) {
                 ResourceSite rs = new ResourceSite(resource);
                 ResourceSiteDAO.insert(rs);
             }
@@ -204,5 +316,92 @@ public class WordDocParser {
         return para.getRuns() != null &&
                 para.getRuns().stream().anyMatch(run -> run.isBold()) &&
                 !looksLikeSubcategory(para);
+    }
+
+    private static String formatParagraphAsHtml(XWPFParagraph para) {
+        StringBuilder html = new StringBuilder("<p>");
+
+        for (XWPFRun run : para.getRuns()) {
+            String text = run.text();
+            if (text == null || text.isBlank()) continue;
+
+            if (run.isBold()) html.append("<b>");
+            if (run.isItalic()) html.append("<i>");
+
+            html.append(text.replace("\n", "<br/>")); // preserve soft breaks
+
+            if (run.isItalic()) html.append("</i>");
+            if (run.isBold()) html.append("</b>");
+        }
+
+        html.append("</p>");
+        return html.toString();
+    }
+
+    private static boolean isBlockStart(String text) {
+        if ("[START_BLOCK]".equals(text)) {
+            return true;
+        }
+        if ("[BLOCK_START]".equals(text)) {
+            return true;
+        }
+        return false;
+    }
+
+    private static boolean isBlockEnd(String text) {
+        if ("[END_BLOCK]".equals(text)) {
+            return true;
+        }
+        if ("[BLOCK_END]".equals(text)) {
+            return true;
+        }
+        return false;
+    }
+
+    private static boolean isListStart(String text) {
+        if ("[START_LIST]".equals(text)) {
+            return true;
+        }
+        if ("[LIST_START]".equals(text)) {
+            return true;
+        }
+        return false;
+    }
+
+    private static boolean isListEnd(String text) {
+        if ("[END_LIST]".equals(text)) {
+            return true;
+        }
+        if ("[LIST_END]".equals(text)) {
+            return true;
+        }
+        return false;
+    }
+
+    private static class ParagraphIterator implements Iterator<XWPFParagraph> {
+        int index = -1;
+        List<XWPFParagraph> paragraphs;
+
+        ParagraphIterator(List<XWPFParagraph> paragraphs) {
+            this.paragraphs = paragraphs;
+        }
+
+        public XWPFParagraph current() {
+            return paragraphs.get(index);
+        }
+
+        public XWPFParagraph next() {
+            index++;
+            return current();
+        }
+
+        public void push(XWPFParagraph paragraph) {
+            index--;
+        }
+
+        @Override
+        public boolean hasNext() {
+            return index < paragraphs.size() - 1;
+        }
     }
 }

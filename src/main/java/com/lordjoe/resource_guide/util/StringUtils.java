@@ -34,7 +34,9 @@ public class StringUtils {
             return true;
         if( s1 == null && s2 != null )
             return false;
-        return textOnly(s1).equals(textOnly(s2));
+        String s =  textOnly(s1);
+        String sx2 = textOnly(s2);
+        return s.equals(sx2);
     }
 
     /*

@@ -1,7 +1,7 @@
 package com.lordjoe.resource_guide;
 
-import com.lordjoe.resource_guide.util.WordDocParser;
 import com.lordjoe.resource_guide.util.DocParserUnclassifiedX;
+import com.lordjoe.resource_guide.util.WordDocParser;
 
 import java.io.File;
 
@@ -12,6 +12,9 @@ public class MainApp {
             System.err.println("Usage: MainApp <path_to_docx>");
             return;
         }
+  //      if(DatabaseConnection.isRemote()) {
+  //          throw new UnsupportedOperationException("Only Local "); // ToDo
+  //      }
 
         String filepath = args[0];
         try {
