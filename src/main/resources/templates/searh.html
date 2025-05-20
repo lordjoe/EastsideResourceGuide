@@ -1,0 +1,41 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title th:text="'Search Results for: ' + ${query}">Search Results</title>
+    <style>
+        body {
+            background: #f2f2f2;
+            font-family: Arial, sans-serif;
+            padding: 20px;
+        }
+        h1 {
+            color: #333;
+        }
+        .resource {
+            margin-bottom: 20px;
+            padding: 15px;
+            background: white;
+            border-radius: 10px;
+            box-shadow: 2px 2px 5px gray;
+        }
+    </style>
+</head>
+<body>
+
+<h1 th:text="'Results for: ' + ${query}">Search Results</h1>
+
+<div th:if="${#lists.isEmpty(results)}">
+    <p>No resources found matching your search.</p>
+</div>
+
+<div th:each="resource : ${results}" class="resource">
+    <h2 th:text="${resource.name}">Organization Name</h2>
+    <p th:text="${resource.description}">Description</p>
+    <p><a th:href="${resource.website}" th:text="${resource.website}" target="_blank">Website</a></p>
+</div>
+
+<a href="/" style="margin-top: 20px; display: inline-block;">← Back to Home</a>
+
+</body>
+</html>

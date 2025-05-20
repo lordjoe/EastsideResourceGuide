@@ -1,0 +1,35 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title th:text="'Resources in ' + ${categoryName}">Category</title>
+    <style>
+        body {
+            background-color: [[${bgColor}]];
+            font-family: Arial, sans-serif;
+            padding: 20px;
+        }
+        h1 {
+            color: #333;
+        }
+        .resource {
+            margin-bottom: 20px;
+            padding: 15px;
+            background: white;
+            border-radius: 10px;
+            box-shadow: 2px 2px 5px gray;
+        }
+    </style>
+</head>
+<body>
+
+<h1 th:text="'Resources in ' + ${categoryName}">Resources</h1>
+
+<div th:each="resource : ${resources}" class="resource">
+    <h2 th:text="${resource.name}">Organization Name</h2>
+    <p th:text="${resource.description}">Description</p>
+    <p><a th:href="${resource.website}" th:text="${resource.website}" target="_blank">Website</a></p>
+</div>
+
+</body>
+</html>

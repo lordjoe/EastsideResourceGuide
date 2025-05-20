@@ -1,0 +1,44 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>Eastside Resource Guide</title>
+    <style>
+        body {
+            background-image: url('/Cover.png');
+            background-size: cover;
+            background-repeat: no-repeat;
+            background-attachment: fixed;
+            text-align: center;
+            color: white;
+        }
+        h1 {
+            font-size: 3em;
+            margin-top: 50px;
+        }
+        .button-container {
+            margin-top: 50px;
+        }
+        .category-button {
+            margin: 10px;
+            padding: 15px 30px;
+            font-size: 1.5em;
+            border: none;
+            border-radius: 10px;
+            cursor: pointer;
+            background-color: #4CAF50;
+            color: white;
+        }
+    </style>
+</head>
+<body>
+<h1>Eastside Resource Guide</h1>
+
+<div class="button-container">
+    <form method="get" action="/category" th:each="category : ${categories}">
+        <button type="submit" name="name" th:value="${category}" class="category-button"
+                th:text="${category}">Category</button>
+    </form>
+</div>
+</body>
+</html>
