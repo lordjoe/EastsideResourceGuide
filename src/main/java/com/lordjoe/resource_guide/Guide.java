@@ -24,7 +24,7 @@ public class Guide {
     private final Map<String, GuideItem> nameToCatagory = new HashMap<>();
     private final Map<Integer, GuideItem> idToSubCatagory = new HashMap<>();
     private final Map<Integer, Resource> idToResource = new HashMap<>();
-    private final List<Catagory> catagories = new ArrayList<>();
+      private final List<Catagory> catagories = new ArrayList<>();
 
     private boolean loaded = false;
 
@@ -44,6 +44,11 @@ public class Guide {
     public List<Catagory> getCatagories() {
         guaranteeLoaded();
         return catagories;
+    }
+
+    public CommunityResource getResourceById(int id) {
+        guaranteeLoaded();
+        return  new CommunityResource(idToResource.get(id));
     }
 
     public Catagory getCatagoryByName(String name) {
@@ -113,7 +118,7 @@ public class Guide {
                     throw new UnsupportedOperationException("Fix This"); // ToDo
                 }
                 idToResource.put(id, res);
-            }
+               }
             if (type == ResourceType.Block) {
                 GuideItem parent = resolveParent(cr.getParentId());
                 if (parent == null) continue;

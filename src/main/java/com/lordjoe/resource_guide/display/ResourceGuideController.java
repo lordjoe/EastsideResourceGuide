@@ -68,6 +68,15 @@ public class ResourceGuideController {
         return html.toString();
     }
 
+ 
+
+    @GetMapping("/login")
+    @ResponseBody
+    public String loginPage(@RequestParam(value = "error", required = false) String error) {
+        String errorMessage = (error != null) ? "<p style='color:red;'>Invalid username or password</p>" : "";
+        return LoginPageGenerator.generateLoginPage(errorMessage.length() > 0);
+    }
+
     private void addCSS(StringBuilder html) {
         html.append("<style>");
         html.append("body { ");
