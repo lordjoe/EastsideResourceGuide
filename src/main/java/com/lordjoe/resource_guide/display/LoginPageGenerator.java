@@ -80,10 +80,10 @@ public class LoginPageGenerator {
         html.append("""
                 <form method="post" action="/login">
                     <label for="username">Username:</label>
-                    <input type="text" name="username" id="username" required />
+                    <input type="text" name="username" id="username" value="admin" required />
 
                     <label for="password">Password:</label>
-                    <input type="password" name="password" id="password" required />
+                    <input type="password" name="password" id="password"  value="senior"   required />
 
                     <button type="submit">Login</button>
                 </form>

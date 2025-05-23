@@ -23,8 +23,7 @@ public class Guide {
 
     private final Map<Integer, GuideItem> idToCatagory = new HashMap<>();
     private final Map<String, GuideItem> nameToCatagory = new HashMap<>();
-    private final Map<Integer, GuideItem> idToSubCatagory = new HashMap<>();
-    private final Map<Integer, Resource> idToResource = new HashMap<>();
+      private final Map<Integer, Resource> idToResource = new HashMap<>();
       private final List<Catagory> catagories = new ArrayList<>();
 
     private boolean loaded = false;
@@ -54,9 +53,24 @@ public class Guide {
 
     public Catagory getCatagoryByName(String name) {
         GuideItem guideItem = nameToCatagory.get(name);
-        if(guideItem instanceof Catagory)
-             return (Catagory) guideItem;
+        if (guideItem instanceof Catagory)
+            return (Catagory) guideItem;
         return null;
+    }
+
+    public Catagory getCatagoryById(Integer id) {
+            GuideItem guideItem = idToCatagory.get(id);
+            if(guideItem instanceof Catagory)
+                return (Catagory) guideItem;
+            return null;
+    }
+
+    public Catagory getTopLevelCategory(int id) {
+        CommunityResource current = getResourceById(id);
+        while (current != null && current.getParentId() != null) {
+            current = getResourceById(current.getParentId());
+        }
+        return getCatagoryById(current.getId()); // current should now be the root category
     }
 
     private void loadFromDatabase() throws SQLException {
@@ -83,7 +97,7 @@ public class Guide {
                     if (parent != null) {
                         SubCatagory sub = new SubCatagory(cr.getId(), cr.getName(), parent);
                         sub.setDescription(mergeDescriptions(descriptions.get(cr.getId())));
-                        idToSubCatagory.put(cr.getId(), sub);
+                        idToCatagory.put(cr.getId(), sub);
                         parent.addSubCatagory(sub);
                     }
                 }
@@ -143,8 +157,6 @@ public class Guide {
         if (parentId == null) return null;
         if (idToCatagory.containsKey(parentId))
             return idToCatagory.get(parentId);
-        if (idToSubCatagory.containsKey(parentId))
-            return idToSubCatagory.get(parentId);
         return idToResource.get(parentId);
     }
 

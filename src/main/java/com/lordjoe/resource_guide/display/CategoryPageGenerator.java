@@ -40,14 +40,15 @@ public class CategoryPageGenerator {
                 append("</h1><a href=\"/\" class=\"home-button\">Home</a> ");
         if (isAuthenticated) {
             html.append("<div class=\"category-buttons\" style=\"margin-top:10px;\">\n");
-            html.append("  <form action=\"/new-resource\" method=\"get\" style=\"display:inline;\">\n");
-            html.append("    <input type=\"hidden\" name=\"parent_id\" value=\"" + category.getId() + "\" />\n");
-            html.append("    <button class=\"home-button\" type=\"submit\">Add New Resource</button>\n");
-            html.append("  </form>\n");
+            html.append("<form action=\"/edit-resource\" method=\"get\" style=\"margin-bottom: 20px;\">");
+            html.append("<input type=\"hidden\" name=\"id\" value=\"0\" />"); // <-- Add this line
+            html.append("<input type=\"hidden\" name=\"parentId\" value=\"").append(category.getId()).append("\" />");
+            html.append("<button type=\"submit\" class=\"button\" style=\"background-color: #4caf50;\">New Resource</button>");
+            html.append("</form>");
 
             html.append("  <form action=\"/new-subcategory\" method=\"get\" style=\"display:inline; margin-left:10px;\">\n");
             html.append("    <input type=\"hidden\" name=\"parent_id\" value=\"" + category.getId() + "\" />\n");
-            html.append("    <button class=\"home-button\" type=\"submit\">Add New Subcategory</button>\n");
+            html.append("    <button class=\"button\" type=\"submit\">Add New Subcategory</button>\n");
             html.append("  </form>\n");
             html.append("</div>\n");
         }
@@ -88,10 +89,11 @@ public class CategoryPageGenerator {
             html.append("<div id=\"subcat-" + sub.getName().hashCode() + "\" class=\"subcategory-header\">" + escapeHtml(sub.getName()) );
             if (isAuthenticated) {
                 html.append("<div class=\"category-buttons\" style=\"margin-top:10px;\">\n");
-                html.append("  <form action=\"/new-resource\" method=\"get\" style=\"display:inline;\">\n");
-                html.append("    <input type=\"hidden\" name=\"parent_id\" value=\"" + category.getId() + "\" />\n");
-                html.append("    <button type=\"submit\">Add New Resource</button>\n");
-                html.append("  </form>\n");
+                html.append("<form action=\"/edit-resource\" method=\"get\" style=\"margin-bottom: 10px;\">");
+                html.append("<input type=\"hidden\" name=\"id\" value=\"0\" />"); // <-- Add this line
+                html.append("<input type=\"hidden\" name=\"parentId\" value=\"").append(sub.getId()).append("\" />");
+                html.append("<button type=\"submit\" class=\"button\" style=\"background-color: #4caf50;\">New Resource</button>");
+                html.append("</form>");
                  html.append("</div>\n");
             }
             html.append("</div>\n");
@@ -126,6 +128,7 @@ public class CategoryPageGenerator {
         }
 
         if (isAuthenticated) {
+ 
             html.append("<form method='get' action='/edit-resource'>")
                     .append("<input type='hidden' name='id' value='").append(r.getId()).append("'/>")
                     .append("<button type='submit' style='margin-top:10px;'>Edit</button>")
