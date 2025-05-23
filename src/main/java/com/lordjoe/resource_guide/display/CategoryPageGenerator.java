@@ -36,7 +36,22 @@ public class CategoryPageGenerator {
 
         html.append("</style></head><body>");
 
-        html.append("<div class=\"category-header\">\n<h1>").append(escapeHtml(category.getName())).append("</h1><a href=\"/\" class=\"home-button\">Home</a></div>");
+        html.append("<div class=\"category-header\">\n<h1>").append(escapeHtml(category.getName())).
+                append("</h1><a href=\"/\" class=\"home-button\">Home</a> ");
+        if (isAuthenticated) {
+            html.append("<div class=\"category-buttons\" style=\"margin-top:10px;\">\n");
+            html.append("  <form action=\"/new-resource\" method=\"get\" style=\"display:inline;\">\n");
+            html.append("    <input type=\"hidden\" name=\"parent_id\" value=\"" + category.getId() + "\" />\n");
+            html.append("    <button class=\"home-button\" type=\"submit\">Add New Resource</button>\n");
+            html.append("  </form>\n");
+
+            html.append("  <form action=\"/new-subcategory\" method=\"get\" style=\"display:inline; margin-left:10px;\">\n");
+            html.append("    <input type=\"hidden\" name=\"parent_id\" value=\"" + category.getId() + "\" />\n");
+            html.append("    <button class=\"home-button\" type=\"submit\">Add New Subcategory</button>\n");
+            html.append("  </form>\n");
+            html.append("</div>\n");
+        }
+        html.append("</div>\n");
 
         if (category.getDescription() != null && !category.getDescription().isEmpty()) {
             html.append("<div class=\"description\">" + escapeHtml(category.getDescription()) + "</div>");
@@ -57,6 +72,7 @@ public class CategoryPageGenerator {
             html.append("<div class=\"anchor-menu\">Jump to:");
             for (SubCatagory sub : subcategories) {
                 html.append(" <a href=\"#subcat-" + sub.getName().hashCode() + "\">" + escapeHtml(sub.getName()) + "</a>");
+
             }
             html.append("</div>");
         }
@@ -69,7 +85,16 @@ public class CategoryPageGenerator {
         }
 
         for (SubCatagory sub : subcategories) {
-            html.append("<div id=\"subcat-" + sub.getName().hashCode() + "\" class=\"subcategory-header\">" + escapeHtml(sub.getName()) + "</div>");
+            html.append("<div id=\"subcat-" + sub.getName().hashCode() + "\" class=\"subcategory-header\">" + escapeHtml(sub.getName()) );
+            if (isAuthenticated) {
+                html.append("<div class=\"category-buttons\" style=\"margin-top:10px;\">\n");
+                html.append("  <form action=\"/new-resource\" method=\"get\" style=\"display:inline;\">\n");
+                html.append("    <input type=\"hidden\" name=\"parent_id\" value=\"" + category.getId() + "\" />\n");
+                html.append("    <button type=\"submit\">Add New Resource</button>\n");
+                html.append("  </form>\n");
+                 html.append("</div>\n");
+            }
+            html.append("</div>\n");
             for (Resource r : sub.getResources()) {
                 appendResourceHtml(r, html, isAuthenticated);
             }
