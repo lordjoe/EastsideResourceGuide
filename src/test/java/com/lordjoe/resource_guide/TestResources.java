@@ -11,6 +11,16 @@ import com.lordjoe.resource_guide.model.CommunityResource;
 public class TestResources {
     public static final TestResources[] EMPTY_ARRAY = {};
 
+    public static final String CATEGORY_DESCRIPTION = "This is Category Annotation";
+    public static final String SECTION1_DESCRIPT = "This is the first Section";
+    public static final String SECTION2_DESCRIPT = "This is the second Section";
+    public static final String CATEGORY_BLOCK = "\n" +
+            "<p>Adult Day Program Terms To Know</p>\n" +
+            "<p><b>Adult Day Care (ADC)</b>: A program which provides day time socialization," +
+            " meals, and activities primarily for persons with physical and/or mental limitations." +
+            " Participants return home each evening. Often used as respite for those caring for" +
+            " an older adult who cannot safely be left alone at home.</p>\n";
+
     public static String ASIAN_DESCRIPT = "Provides a broad range of social services" +
             " for elderly Asian Pacific Americans in King County" +
             " including communication assistance for 40 languages, " +

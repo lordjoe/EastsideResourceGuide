@@ -16,6 +16,9 @@ import java.util.Map;
 public class ResourceDescriptionDAO {
 
     public static void insert(ResourceDescription description) throws SQLException {
+//        if(description.isBlock()) {
+//            System.out.println("Inserting Block\n " + description.getDescription());
+ //       }
         String sql = "INSERT INTO resource_descriptions (resource_id, content, is_block) VALUES (?, ?, ?)";
         try (Connection conn = DatabaseConnection.getConnection();
 
@@ -71,7 +74,11 @@ public static Map<Integer, List<ResourceDescription>> loadGroupedByResourceX() t
          ResultSet rs = stmt.executeQuery()) {
 
         while (rs.next()) {
-            ResourceDescription resource = new ResourceDescription(rs.getInt("resource_id"), rs.getString("content"), rs.getBoolean("is_block"));
+            int id = rs.getInt("id");
+
+            String string = rs.getString("content");
+            boolean isBlock = rs.getBoolean("is_block");
+            ResourceDescription resource = new ResourceDescription(rs.getInt("resource_id"), string, isBlock);
 
             List<ResourceDescription> l = result.get(resource.getResourceId());
             if (l == null) {

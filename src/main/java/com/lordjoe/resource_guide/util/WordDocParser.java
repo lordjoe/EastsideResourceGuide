@@ -21,7 +21,9 @@ import java.util.regex.Pattern;
 
 public class WordDocParser {
 
-    private static final Pattern PHONE_PATTERN = Pattern.compile("\\(\\d{3}\\) \\d{3}-\\d{4}");
+    private static final Pattern PHONE_PATTERN = Pattern.compile(
+            "(?i).*\\bphone\\b[:\\s]*.*|.*\\(?\\d{3}\\)?[\\s.-]*\\d{3}[\\s.-]*\\d{4}.*"
+    );
     private static final Pattern EMAIL_PATTERN = Pattern.compile("\\b[A-Za-z0-9._%+-]+@[A-Za-z0-9.-]+\\.[A-Za-z]{2,6}\\b");
     private static final Pattern URL_PATTERN = Pattern.compile("https?://\\S+|www\\.\\S+");
 
@@ -40,7 +42,8 @@ public class WordDocParser {
 
             String categoryName = file.getName().replace("_", " ").replace(".docx", "").trim();
             Catagory category = CategoryUtils.CreateCatagory(categoryName);
-            CommunityResource rs = new CommunityResource(category.getId(), categoryName, ResourceType.Category, null);
+            int id = category.getId();
+            CommunityResource rs = new CommunityResource(id, categoryName, ResourceType.Category, null);
              resourceStack.push(rs);
             descriptions.push(new ArrayList<>());
             List<XWPFParagraph> paragraphs = document.getParagraphs();
@@ -86,14 +89,16 @@ public class WordDocParser {
                 if (isBlockStart(text)) {
                     inBlock = true;
                     blockBuffer.setLength(0);
-                    continue;
+                    saveResource(activeResource, currentDescriptions, phoneLines, addressLines);
+                     continue;
                 }
 
                 if (isBlockEnd(text)) {
                     inBlock = false;
                     String blockText = blockBuffer.toString();
                     currentDescriptions.add("[BLOCK]\n" + blockText);
-                      continue;
+                    saveResource(activeResource, currentDescriptions, phoneLines, addressLines);
+                    continue;
                 }
 
                 if (isListStart(text)) {
@@ -153,6 +158,8 @@ public class WordDocParser {
                         return;
                     }
                     if (activeResource.getType() == ResourceType.Category) {
+                        saveResource(activeResource, currentDescriptions, phoneLines, addressLines);
+
                         CommunityResource current = insertResource(text, ResourceType.Subcategory, activeResource.getId());
                         resourceStack.push(current);
                         descriptions.push(new ArrayList<>());
@@ -182,6 +189,11 @@ public class WordDocParser {
 
                         }
                     }
+                    if (activeResource.getType() == ResourceType.Category || activeResource.getType() == ResourceType.Subcategory) {
+                        saveResource(activeResource, currentDescriptions, phoneLines, addressLines);
+                        currentDescriptions.clear();
+                    }
+
                     CommunityResource current = insertResource(text, ResourceType.Resource, activeResource.getId());
 
                     resourceStack.push(current);
@@ -283,11 +295,24 @@ public class WordDocParser {
 
     private static void saveResource(CommunityResource resource, List<String> descriptions,
                                      List<String> phoneLines, List<String> addressLines) throws Exception {
-        if(savedItems.contains(resource.getId()))
+        int id = resource.getId();
+        String name = resource.getName();
+ //       if(id == 2)
+ //           System.out.println(name);
+
+        for (String desc : descriptions) {
+            boolean isBlock  = false;
+            if(desc.startsWith("[BLOCK]"))  {
+                desc = desc.substring("[BLOCK]".length(), desc.length());
+                isBlock = true;
+            }
+            ResourceDescriptionDAO.insert(new ResourceDescription(id , desc, isBlock));
+        }
+        descriptions.clear();
+        if(savedItems.contains(id))
             return;
         savedItems.add(resource.getId());
-        String name = resource.getName();
-   //     System.out.println("Saving " + name);
+    //     System.out.println("Saving " + name);
         if (resource != null) {
             if (!phoneLines.isEmpty()) {
                 resource.setPhone(String.join("\n", phoneLines));
@@ -296,11 +321,9 @@ public class WordDocParser {
                 String join = String.join("\n", addressLines);
                 resource.setAddress(join);
             }
-            int id = CommunityResourceDAO.insert(resource);
-            resource.setId(id);
-            for (String desc : descriptions) {
-                ResourceDescriptionDAO.insert(new ResourceDescription(id, desc, false));
-            }
+            int idx = CommunityResourceDAO.insert(resource);
+            resource.setId(idx);
+
             if (resource.hasSiteInfo()) {
                 ResourceSite rs = new ResourceSite(resource);
                 ResourceSiteDAO.insert(rs);

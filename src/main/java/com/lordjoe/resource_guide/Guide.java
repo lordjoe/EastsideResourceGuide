@@ -23,8 +23,9 @@ public class Guide {
 
     private final Map<Integer, GuideItem> idToCatagory = new HashMap<>();
     private final Map<String, GuideItem> nameToCatagory = new HashMap<>();
-      private final Map<Integer, Resource> idToResource = new HashMap<>();
-      private final List<Catagory> catagories = new ArrayList<>();
+    private final Map<Integer, Resource> idToResource = new HashMap<>();
+    private final Map<Integer, Resource> idToBlock= new HashMap<>();
+    private final List<Catagory> catagories = new ArrayList<>();
 
     private boolean loaded = false;
 
@@ -48,7 +49,7 @@ public class Guide {
 
     public CommunityResource getResourceById(int id) {
         guaranteeLoaded();
-        return  new CommunityResource(idToResource.get(id));
+        return new CommunityResource(idToResource.get(id));
     }
 
     public Catagory getCatagoryByName(String name) {
@@ -59,10 +60,10 @@ public class Guide {
     }
 
     public Catagory getCatagoryById(Integer id) {
-            GuideItem guideItem = idToCatagory.get(id);
-            if(guideItem instanceof Catagory)
-                return (Catagory) guideItem;
-            return null;
+        GuideItem guideItem = idToCatagory.get(id);
+        if (guideItem instanceof Catagory)
+            return (Catagory) guideItem;
+        return null;
     }
 
     public Catagory getTopLevelCategory(int id) {
@@ -77,29 +78,41 @@ public class Guide {
         Map<Integer, CommunityResource> allResources = CommunityResourceDAO.loadAllAsMap();
         Map<Integer, List<ResourceDescription>> descriptions = ResourceDescriptionDAO.loadGroupedByResourceX();
         Map<Integer, ResourceSite> sites = ResourceSiteDAO.loadAllAsMap();
+        Map<Integer, List<ResourceDescription>> blockd = mapBlockResources(descriptions);
 
         // First pass: categories and subcategories
         for (CommunityResource cr : allResources.values()) {
             ResourceType type = cr.getType();
             switch (type) {
                 case Category -> {
-                    Catagory cat = new Catagory(cr.getId(), cr.getName());
-                    cat.setDescription(mergeDescriptions(descriptions.get(cr.getId())));
+                    String name = cr.getName();
+                    Catagory cat = new Catagory(cr.getId(), name);
+                    int id = cr.getId();
+                    List<ResourceDescription> descriptions1 = descriptions.get(id);
+                    String description = mergeDescriptions(descriptions1);
+                      cat.setDescription(description);
+                      List<ResourceDescription> blocks = blockd.get(id);
+                    addBlocks(blocks, cat);
                     catagories.add(cat);
-                    idToCatagory.put(cr.getId(), cat);
+                    idToCatagory.put(id, cat);
                     nameToCatagory.put(cr.getName(), cat);
                 }
                 case Subcategory -> {
                     GuideItem parentX = idToCatagory.get(cr.getParentId());
-                    if(!(parentX instanceof Catagory))
+                    if (!(parentX instanceof Catagory))
                         return;
                     Catagory parent = (Catagory) parentX;
-                    if (parent != null) {
-                        SubCatagory sub = new SubCatagory(cr.getId(), cr.getName(), parent);
-                        sub.setDescription(mergeDescriptions(descriptions.get(cr.getId())));
-                        idToCatagory.put(cr.getId(), sub);
-                        parent.addSubCatagory(sub);
-                    }
+                    String name = cr.getName();
+                    int id1 = cr.getId();
+                    SubCatagory sub = new SubCatagory(id1, name, parent);
+                    idToCatagory.put(id1, sub);
+                    parent.addSubCatagory(sub);
+                    List<ResourceDescription> descriptions1 = descriptions.get(id1);
+                    String description = mergeDescriptions(descriptions1);
+                    sub.setDescription(description);
+                    List<ResourceDescription> blocks = blockd.get(id1);
+                    addBlocks(blocks, sub);
+
                 }
                 default -> {
                 }
@@ -115,8 +128,13 @@ public class Guide {
 
                 Resource res = new Resource(cr.getId(), cr.getName(), parent);
 
-                res.setDescription(mergeDescriptions(descriptions.get(cr.getId())));
-
+                int id1 = cr.getId();
+                List<ResourceDescription> descriptions1 = descriptions.get(id1);
+                String description = mergeDescriptions(descriptions1);
+                res.setDescription(description);
+                List<ResourceDescription> blocks = blockd.get(id1);
+                addBlocks(blocks, res);
+           
                 ResourceSite site = sites.get(cr.getId());
                 if (site != null) {
                     res.setAddress(site.getAddress());
@@ -133,7 +151,7 @@ public class Guide {
                     throw new UnsupportedOperationException("Fix This"); // ToDo
                 }
                 idToResource.put(id, res);
-               }
+            }
             if (type == ResourceType.Block) {
                 GuideItem parent = resolveParent(cr.getParentId());
                 if (parent == null) continue;
@@ -145,12 +163,47 @@ public class Guide {
                 String description = mergeDescriptions(descriptions1);
                 res.setDescription(description);
                 parent.addBlock(res);
-                idToResource.put(cr.getId(), res);
+                idToBlock.put(cr.getId(), res);
 
             }
         }
 
         loaded = true;
+    }
+
+    private Map<Integer, List<ResourceDescription>> mapBlockResources(Map<Integer, List<ResourceDescription>> descriptions) {
+        if(descriptions == null)
+            return null;
+
+        Map<Integer, List<ResourceDescription>> idToBlocks = new HashMap<>();
+        for (Integer i : descriptions.keySet()) {
+            List<ResourceDescription> list = descriptions.get(i);
+            if(list == null)
+                continue;
+            List<ResourceDescription> remove = new ArrayList<>();
+             for (ResourceDescription resourceDescription : list) {
+                if(resourceDescription.isBlock())   {
+                    remove.add(resourceDescription);
+                }
+            }
+             if(!remove.isEmpty()) {
+                 list.removeAll(remove);
+                 idToBlocks.put(i, remove);
+             }
+        }
+        return idToBlocks;
+    }
+
+    private void addBlocks(List<ResourceDescription> descriptions1, GuideItem parent) {
+        if (descriptions1 != null && !descriptions1.isEmpty()) {
+            for (ResourceDescription resourceDescription : descriptions1) {
+                if (resourceDescription.isBlock()) {
+                    Resource resx = new Resource(resourceDescription.getResourceId(), parent.getName(), parent);
+                    resx.setDescription(resourceDescription.getDescription());
+                    parent.addBlock(resx);
+                }
+            }
+        }
     }
 
     private GuideItem resolveParent(Integer parentId) {
@@ -164,14 +217,15 @@ public class Guide {
         if (descriptions == null || descriptions.isEmpty()) return null;
         StringBuilder sb = new StringBuilder();
         for (ResourceDescription d : descriptions) {
-            sb.append(d.getDescription()).append("\n");
+            if (!d.isBlock())
+                sb.append(d.getDescription()).append("\n");
         }
         return sb.toString().trim();
     }
 
     public static void main(String[] args) throws Exception {
         if (args.length > 0) {
-             if(args[0].equals("remote"))  {
+            if (args[0].equals("remote")) {
                 DatabaseConnection.setREMOTE();
             }
         }

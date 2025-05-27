@@ -61,6 +61,8 @@ public class GuideItem implements Comparable<GuideItem> {
     }
 
     public void addBlock(Resource blockText) {
+        if(!blocks.isEmpty())
+            System.out.println(blockText.getDescription());
         blocks.add(blockText);
     }
 
