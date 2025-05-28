@@ -44,7 +44,7 @@ public class WordDocParser {
             Catagory category = CategoryUtils.CreateCatagory(categoryName);
             int id = category.getId();
             CommunityResource rs = new CommunityResource(id, categoryName, ResourceType.Category, null);
-             resourceStack.push(rs);
+            resourceStack.push(rs);
             descriptions.push(new ArrayList<>());
             List<XWPFParagraph> paragraphs = document.getParagraphs();
             ParagraphIterator items = new ParagraphIterator(paragraphs);
@@ -70,7 +70,7 @@ public class WordDocParser {
         boolean readDescription = false;
         boolean readingAddress = false;
         boolean inBlock = false;
-   //     printResourceStack(resourceStack);
+        //     printResourceStack(resourceStack);
 
         try {
             StringBuilder blockBuffer = new StringBuilder();
@@ -79,18 +79,21 @@ public class WordDocParser {
                 currentDescriptions = descriptions.lastElement();
                 XWPFParagraph para = items.next();
                 String text = para.getText().trim();
- 
+
 
                 if (text.isEmpty()) {
-                  //  items.next();
+                    //  items.next();
                     continue;
                 }
+
+                if(text.contains("A program which provides day"))
+                    System.out.println(text);
 
                 if (isBlockStart(text)) {
                     inBlock = true;
                     blockBuffer.setLength(0);
                     saveResource(activeResource, currentDescriptions, phoneLines, addressLines);
-                     continue;
+                    continue;
                 }
 
                 if (isBlockEnd(text)) {
@@ -98,6 +101,7 @@ public class WordDocParser {
                     String blockText = blockBuffer.toString();
                     currentDescriptions.add("[BLOCK]\n" + blockText);
                     saveResource(activeResource, currentDescriptions, phoneLines, addressLines);
+                    blockBuffer.setLength(0);
                     continue;
                 }
 
@@ -119,7 +123,7 @@ public class WordDocParser {
                     resourceStack.pop();
                     descriptions.pop();
                     continue;
-                 }
+                }
 
                 if (inBlock) {
                     StringBuilder formatted = new StringBuilder("<p>");
@@ -163,7 +167,7 @@ public class WordDocParser {
                         CommunityResource current = insertResource(text, ResourceType.Subcategory, activeResource.getId());
                         resourceStack.push(current);
                         descriptions.push(new ArrayList<>());
-                   //     items.next();
+                        //     items.next();
                         handleItems(items, resourceStack,descriptions, false);
                         continue;
                     }
@@ -183,7 +187,7 @@ public class WordDocParser {
                             continue;
                         } else {
                             saveResource(activeResource, currentDescriptions, phoneLines, addressLines);
-                             resourceStack.pop();
+                            resourceStack.pop();
                             items.push(para);
                             return;
 
@@ -264,7 +268,7 @@ public class WordDocParser {
                 }
             }
             if(!resourceStack.isEmpty()) {
-                 activeResource = resourceStack.lastElement();
+                activeResource = resourceStack.lastElement();
                 // Final resource save
                 saveResource(activeResource, currentDescriptions, phoneLines, addressLines);
                 resourceStack.pop();
@@ -272,7 +276,7 @@ public class WordDocParser {
             }
         }
         finally {
-   //         System.out.println("finished " + activeResource.getName());
+            //         System.out.println("finished " + activeResource.getName());
             while(!resourceStack.isEmpty()) {
                 int activeId = resourceStack.lastElement().getId();
                 if(activeId != activeResource.getId())
@@ -289,7 +293,7 @@ public class WordDocParser {
             sb.append(resourceStack.get(i).getName());
             sb.append("-->");
         }
-          System.out.println(sb.toString());
+        System.out.println(sb.toString());
     }
 
 
@@ -297,8 +301,8 @@ public class WordDocParser {
                                      List<String> phoneLines, List<String> addressLines) throws Exception {
         int id = resource.getId();
         String name = resource.getName();
- //       if(id == 2)
- //           System.out.println(name);
+        //       if(id == 2)
+        //           System.out.println(name);
 
         for (String desc : descriptions) {
             boolean isBlock  = false;
@@ -312,7 +316,7 @@ public class WordDocParser {
         if(savedItems.contains(id))
             return;
         savedItems.add(resource.getId());
-    //     System.out.println("Saving " + name);
+        //     System.out.println("Saving " + name);
         if (resource != null) {
             if (!phoneLines.isEmpty()) {
                 resource.setPhone(String.join("\n", phoneLines));

@@ -35,6 +35,7 @@ public class Catagory extends GuideItem {
 
 
     public void addSubCatagory(SubCatagory subcat) {
+
         addChild(subcat);
     }
 

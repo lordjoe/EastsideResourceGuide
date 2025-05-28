@@ -19,6 +19,8 @@ public class CategoryDescriptionDAO {
             ps.setString(1, category);
             ps.setString(2, subcategory);
             ps.setString(3, description);
+            if(description.contains("A program which provides day"))
+                System.out.println(description);
             ps.executeUpdate();
             DatabaseConnection.clearConnection();
         }

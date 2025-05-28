@@ -198,8 +198,9 @@ public class Guide {
         if (descriptions1 != null && !descriptions1.isEmpty()) {
             for (ResourceDescription resourceDescription : descriptions1) {
                 if (resourceDescription.isBlock()) {
-                    Resource resx = new Resource(resourceDescription.getResourceId(), parent.getName(), parent);
+                    Resource resx = new Resource(resourceDescription.getResourceId(),   parent);
                     resx.setDescription(resourceDescription.getDescription());
+
                     parent.addBlock(resx);
                 }
             }

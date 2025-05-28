@@ -33,6 +33,8 @@ public class GuideItem implements Comparable<GuideItem> {
         return type;
     }
 
+
+
     public int getParentId() {
         return parentId;
     }
@@ -46,6 +48,9 @@ public class GuideItem implements Comparable<GuideItem> {
 
     public void addChild(GuideItem resource) {
         String name = resource.getName();
+        if(name.equals(getName())) {
+            System.out.println("Duplicate name: " + name);
+        }
         if (NameToResource.containsKey(name)) {
             if(resource instanceof Resource) {
                 ((Resource) resource).reconcile(NameToResource.get(name));

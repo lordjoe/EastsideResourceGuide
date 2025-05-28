@@ -38,6 +38,7 @@ public class ColorMap {
         if(CategoryColors.size() > 0)
             return;
         addColor("Adult Day Programs", new Color(243, 156, 18));
+        addColor("Adult Day Care Programs", new Color(243, 156, 18));
         addColor("Emergency Assistance Programs", new Color(146, 43, 33));
         addColor("Emergency Preparedness", new Color(123, 36, 28));
         addColor("Food & Meal Programs", new Color(252, 243, 207));

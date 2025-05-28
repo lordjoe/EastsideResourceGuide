@@ -65,6 +65,13 @@ public class Resource extends GuideItem {
     }
 
 
+    public Resource(int id,   GuideItem parent) {
+        super(id, "BLOCK", ResourceType.Block, parent.getId());
+        this.id = id;
+        this.parent = parent;
+        parent.addChild(this);
+    }
+
     public void populateFrom(CommunityResource r) {
         description = r.getDescription();
         address = r.getAddress();
@@ -87,6 +94,8 @@ public class Resource extends GuideItem {
     }
 
     public void setDescription(String description) {
+        if(description != null && description.contains("A program which provides day"))
+            System.out.println(description);
         this.description = description;
     }
 
