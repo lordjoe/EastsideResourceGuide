@@ -3,6 +3,7 @@ package com.lordjoe.resource_guide;
 import com.lordjoe.resource_guide.dao.ResourceType;
 import com.lordjoe.resource_guide.model.CommunityResource;
 import com.lordjoe.resource_guide.util.DatabaseConnection;
+import com.lordjoe.resource_guide.util.SecretFetcher;
 import com.lordjoe.resource_guide.util.StringUtils;
 import com.lordjoe.resource_guide.util.WordDocParser;
 
@@ -19,6 +20,8 @@ public class TestParseAndLoad {
 
 
     public static void main(String[] args) throws Exception {
+
+        assert SecretFetcher.getPasswordfromSecret().equals(SecretFetcher.getPasswordfromSecretB());
         DatabaseConnection.setTEST();
         if (true) {
             Database.clearDatabase();

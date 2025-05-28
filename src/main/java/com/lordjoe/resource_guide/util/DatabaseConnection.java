@@ -24,6 +24,12 @@ public class DatabaseConnection {
         TEST = true;
     }
     public static void setREMOTE() {
+        try {
+            SecretFetcher.getPasswordfromSecret(); // make sure this works
+        } catch (Exception e) {
+            throw new RuntimeException(e);
+
+        }
         REMOTE = true;
     }
 
