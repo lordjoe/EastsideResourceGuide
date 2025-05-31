@@ -84,9 +84,15 @@ public class LoginPageGenerator {
 
                     <label for="password">Password:</label>
                     <input type="password" name="password" id="password"  value="senior"   required />
-
+               <input type="checkbox" onclick="togglePassword()"> Show Password<br>
                     <button type="submit">Login</button>
                 </form>
+                <script>
+                        function togglePassword() {
+                            const pwd = document.getElementById("password");
+                            pwd.type = (pwd.type === "password") ? "text" : "password";
+                        }
+                        </script>
             </div>
         </body>
         </html>

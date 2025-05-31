@@ -20,9 +20,41 @@ public class ResourceGuideController {
 
     @GetMapping("/")
     @ResponseBody
-    public String homePage() {
+    public String landingPage() {
+        return """
+        <html>
+        <head>
+          <title>Loading...</title>
+          <script>
+            window.onload = function() {
+              fetch('/main')
+                .then(response => response.text())
+                .then(html => document.body.innerHTML = html)
+                .catch(err => document.body.innerHTML = '<h1>Failed to load.</h1>');
+            };
+          </script>
+        </head>
+        <body>
+          <h1 style='text-align:center;'>Loading Resource Guide...</h1>
+        </body>
+        </html>
+    """;
+    }
+
+    @GetMapping("/main")
+    @ResponseBody
+    public String mainContent() {
         Guide guide = Guide.Instance;
-        List<Catagory> categories = guide.getCatagories();
+        List<Catagory> categories = guide.getCatagories();  // long call
+
+        // generate full HTML
+        return  generateHomePage(categories);
+    }
+
+
+    public String generateHomePage(List<Catagory> categories) {
+        Guide guide = Guide.Instance;
+
 
         StringBuilder html = new StringBuilder();
         html.append("<html><head>");
@@ -68,7 +100,7 @@ public class ResourceGuideController {
         return html.toString();
     }
 
- 
+
 
     @GetMapping("/login")
     @ResponseBody
