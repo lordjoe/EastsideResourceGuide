@@ -46,6 +46,10 @@ public class Guide {
         guaranteeLoaded();
         return catagories;
     }
+    public List< Resource> getCommunityResources() {
+        guaranteeLoaded();
+        return new ArrayList<>(idToResource.values());
+    }
 
     public CommunityResource getResourceById(int id) {
         guaranteeLoaded();
