@@ -14,13 +14,18 @@ public class SecurityConfig {
     public SecurityFilterChain filterChain(HttpSecurity http) throws Exception {
         http
                 .authorizeHttpRequests(auth -> auth
+                        // ✅ exact match, no trailing slash
+                        .requestMatchers("/sandhurst").permitAll()
+                        // ✅ allow everything public before auth rules
                         .requestMatchers(
                                 "/", "/main", "/category", "/subcategory", "/resource",
                                 "/login", "/logout", "/error",
                                 "/Cover.png", "/favicon.ico",
                                 "/css/**", "/js/**", "/images/**", "/**/*.css", "/**/*.js", "/**/*.png"
                         ).permitAll()
+                        // ✅ restrict edit/admin routes
                         .requestMatchers("/admin/**", "/edit/**").authenticated()
+                        // ✅ fallback for unknown paths
                         .anyRequest().permitAll()
                 )
                 .formLogin(form -> form
@@ -35,10 +40,7 @@ public class SecurityConfig {
                         .deleteCookies("JSESSIONID")
                         .permitAll()
                 )
-                .sessionManagement(session -> session
-                        .invalidSessionUrl(null) // ❗ disables forced redirect on invalid session
-                )
-                .csrf().disable();
+                .csrf().disable(); // only disable if no CSRF tokens are used in forms
 
         return http.build();
     }
@@ -46,6 +48,6 @@ public class SecurityConfig {
     @Bean
     @SuppressWarnings("deprecation")
     public static PasswordEncoder passwordEncoder() {
-        return NoOpPasswordEncoder.getInstance(); // only for dev/test
+        return NoOpPasswordEncoder.getInstance(); // for testing only
     }
 }

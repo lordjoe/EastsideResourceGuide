@@ -1,31 +1,25 @@
 package com.lordjoe.sandhurst;
 
-import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.boot.CommandLineRunner;
 import org.springframework.boot.SpringApplication;
 import org.springframework.boot.autoconfigure.SpringBootApplication;
 import org.springframework.boot.autoconfigure.jdbc.DataSourceAutoConfiguration;
-import org.springframework.web.bind.annotation.GetMapping;
-import org.springframework.web.bind.annotation.ResponseBody;
+import org.springframework.context.ApplicationContext;
+import org.springframework.context.annotation.Bean;
 
-import java.util.List;
+import java.util.Arrays;
 
-@SpringBootApplication(exclude = {DataSourceAutoConfiguration.class})
+@SpringBootApplication(
+        scanBasePackages = "com.lordjoe", // ensures scanning includes your repository
+        exclude = { DataSourceAutoConfiguration.class }
+)
 public class SandhurstApplication {
-    @Autowired
-    private HouseRepository houseRepository;
-
-    @GetMapping("/sandhurst")
-    @ResponseBody
-    public String showMap() {
-        List<House> houses = houseRepository.findAll();
-        return MapPageGenerator.generate(houses);
+    @Bean
+    CommandLineRunner runner(ApplicationContext ctx) {
+        return args -> System.out.println(Arrays.toString(ctx.getBeanDefinitionNames()));
     }
-
-    public static void main(String[] args) throws Exception {
-        Database.clearDatabase();
-        Database.createDatabase();
-        Database.loadHousesFromTSV("kirkland_houses.tsv");
-
+    public static void main(String[] args) {
         SpringApplication.run(SandhurstApplication.class, args);
     }
 }
+

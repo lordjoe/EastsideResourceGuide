@@ -1,15 +1,18 @@
 package com.lordjoe.sandhurst;
 
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.boot.autoconfigure.SpringBootApplication;
-import org.springframework.boot.autoconfigure.jdbc.DataSourceAutoConfiguration;
 import org.springframework.stereotype.Controller;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.ResponseBody;
 
 import java.util.List;
 
-@SpringBootApplication(exclude = { DataSourceAutoConfiguration.class })
+/**
+ * com.lordjoe.sandhurst.MapController
+ * User: Steve
+ * Date: 6/12/25
+ */
+
 @Controller
 public class MapController {
 
@@ -22,13 +25,6 @@ public class MapController {
         List<House> houses = houseRepository.findAll();
         return MapPageGenerator.generate(houses);
     }
-
-    public static void main(String[] args) throws Exception {
-        Database.clearDatabase();
-        Database.createDatabase();
-        Database.loadHousesFromTSV("kirkland_houses.tsv"); // Ensure path is correct
-        org.springframework.boot.SpringApplication.run(MapController.class, args);
-    }
 }
 
-
+ 
