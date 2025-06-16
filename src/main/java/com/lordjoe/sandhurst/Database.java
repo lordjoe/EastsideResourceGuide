@@ -54,6 +54,7 @@ public class Database {
                 if (scanner.hasNextLine()) scanner.nextLine(); // skip header
                 while (scanner.hasNextLine()) {
                     String line = scanner.nextLine();
+                    System.out.println(line);
                     try {
                          String[] parts = line.split("\t");
                         if (parts.length == 3) {

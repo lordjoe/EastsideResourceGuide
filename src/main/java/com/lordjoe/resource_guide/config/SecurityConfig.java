@@ -20,6 +20,8 @@ public class SecurityConfig {
                         .requestMatchers(
                                 "/", "/main", "/category", "/subcategory", "/resource",
                                 "/login", "/logout", "/error",
+                                "/sandhurst",
+                                "/sandhurst/house/**",
                                 "/Cover.png", "/favicon.ico",
                                 "/css/**", "/js/**", "/images/**", "/**/*.css", "/**/*.js", "/**/*.png"
                         ).permitAll()

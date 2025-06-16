@@ -1,61 +1,33 @@
 package com.lordjoe.sandhurst;
 
-import jakarta.persistence.*;
-import java.util.Objects;
-
-@Entity
-@Table(name = "house")
 public class House {
-    @Id
-    @GeneratedValue(strategy = GenerationType.IDENTITY)
-    private Long id;
+    public final int id;
+    public final double latitude;
+    public final double longitude;
+    public final String address;
 
-    @Column(nullable = false)
-    private String address;
+    public int getId() {
+        return id;
+    }
 
-    @Column
-    private Double latitude;
+    public String getAddress() {
+        return address;
+    }
 
-    @Column
-    private Double longitude;
+    public double getLongitude() {
+        return longitude;
+    }
 
-    public House() {}
+    public double getLatitude() {
+        return latitude;
+    }
 
-    public House(String address, Double latitude, Double longitude) {
-        this.address = address;
+    public House(int id, double latitude, double longitude, String address) {
+        this.id = id;
         this.latitude = latitude;
         this.longitude = longitude;
+        this.address = address;
     }
 
-    public Long getId() { return id; }
-    public String getAddress() { return address; }
-    public void setAddress(String address) { this.address = address; }
-    public Double getLatitude() { return latitude; }
-    public void setLatitude(Double latitude) { this.latitude = latitude; }
-    public Double getLongitude() { return longitude; }
-    public void setLongitude(Double longitude) { this.longitude = longitude; }
 
-    @Override
-    public boolean equals(Object o) {
-        if (this == o) return true;
-        if (o == null || getClass() != o.getClass()) return false;
-        House house = (House) o;
-        return Objects.equals(id, house.id);
-    }
-
-    @Override
-    public int hashCode() {
-        return Objects.hash(id);
-    }
-
-    @Override
-    public String toString() {
-        return "House{" +
-                "id=" + id +
-                ", address='" + address + '\'' +
-                ", latitude=" + latitude +
-                ", longitude=" + longitude +
-                '}';
-    }
 }
-

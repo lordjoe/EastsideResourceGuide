@@ -1,49 +1,47 @@
 package com.lordjoe.sandhurst;
 
-import java.util.List;
+import java.io.PrintWriter;
 
 public class MapPageGenerator {
 
-    public static String generate(List<House> houses) {
-        StringBuilder sb = new StringBuilder();
+    public static void writeMapPage(PrintWriter out, String mapApiKey) {
+        out.println("<!DOCTYPE html>");
+        out.println("<html>");
+        out.println("<head>");
+        out.println("    <title>Sandhurst Neighborhood Map</title>");
+        out.println("    <meta name=\"viewport\" content=\"width=device-width, initial-scale=1\">");
+        out.println("    <script src=\"https://maps.googleapis.com/maps/api/js?key=" + mapApiKey + "\"></script>");
+        out.println("    <script>");
+        out.println("      function initMap() {");
+        out.println("        const map = new google.maps.Map(document.getElementById('map'), {});");
+        out.println("        const bounds = new google.maps.LatLngBounds();");
 
-        sb.append("""
-            <!DOCTYPE html>
-            <html>
-            <head>
-                <title>Neighborhood Map</title>
-                <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.3/dist/leaflet.css"/>
-                <style>#map { height: 600px; }</style>
-            </head>
-            <body>
-            <h2>Neighborhood Map</h2>
-            <div id="map"></div>
+        for (House house : Neighborhood.Instance.getHouses()) {
+            int id = house.getId();
+            double lat = house.getLatitude();
+            double lon = house.getLongitude();
 
-            <script src="https://unpkg.com/leaflet@1.9.3/dist/leaflet.js"></script>
-            <script>
-                const map = L.map('map').setView([47.655, -122.201], 15);
-
-                L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
-                    attribution: '&copy; OpenStreetMap contributors'
-                }).addTo(map);
-        """);
-
-        for (House house : houses) {
-            if (house.getLatitude() != 0 && house.getLongitude() != 0) {
-                String jsSafeAddress = house.getAddress().replace("'", "\\'");
-                sb.append(String.format("""
-                    L.marker([%f, %f]).addTo(map)
-                        .bindPopup('%s');
-                """, house.getLatitude(), house.getLongitude(), jsSafeAddress));
-            }
+            out.printf("        const marker%d = new google.maps.Marker({ position: { lat: %.7f, lng: %.7f }, map: map });%n", id, lat, lon);
+            out.printf("        marker%d.addListener('click', function() { window.location.href = '/sandhurst/house/%d'; });%n", id, id);
+            out.printf("        bounds.extend(marker%d.getPosition());%n", id);
         }
 
-        sb.append("""
-            </script>
-            </body>
-            </html>
-        """);
-
-        return sb.toString();
+        out.println("        map.fitBounds(bounds);");
+        out.println("      }");
+        out.println("      window.onload = initMap;");
+        out.println("    </script>");
+        out.println("    <style>");
+        out.println("      html, body { height: 100%%; margin: 0; padding: 0; }");
+        out.println("      #map { height: 90vh; width: 100%%; }");
+        out.println("      #topbar { padding: 10px; }");
+        out.println("    </style>");
+        out.println("</head>");
+        out.println("<body>");
+        out.println("  <div id=\"topbar\">");
+        out.println("    <button onclick=\"location.href='/sandhurst'\">Sandhurst</button>");
+        out.println("  </div>");
+        out.println("  <div id=\"map\"></div>");
+        out.println("</body>");
+        out.println("</html>");
     }
 }
