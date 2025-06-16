@@ -13,6 +13,7 @@ public class SecurityConfig {
     @Bean
     public SecurityFilterChain filterChain(HttpSecurity http) throws Exception {
         http
+                .csrf(csrf -> csrf.disable())
                 .authorizeHttpRequests(auth -> auth
                         // ✅ exact match, no trailing slash
                         .requestMatchers("/sandhurst").permitAll()
@@ -41,8 +42,7 @@ public class SecurityConfig {
                         .invalidateHttpSession(true)
                         .deleteCookies("JSESSIONID")
                         .permitAll()
-                )
-                .csrf().disable(); // only disable if no CSRF tokens are used in forms
+                ); // only disable if no CSRF tokens are used in forms
 
         return http.build();
     }
