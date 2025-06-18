@@ -15,24 +15,49 @@ public class MapPageGenerator {
         out.println("      function initMap() {");
         out.println("        const map = new google.maps.Map(document.getElementById('map'), {});");
         out.println("        const bounds = new google.maps.LatLngBounds();");
+        out.println("        const infoWindow = new google.maps.InfoWindow();");
 
         for (House house : Neighborhood.Instance.getHouses()) {
             int id = house.getId();
+            String safeAddress = house.getAddress().replace("'", "\\'");
             double lat = house.getLatitude();
             double lon = house.getLongitude();
 
-            out.printf("        const marker%d = new google.maps.Marker({ position: { lat: %.7f, lng: %.7f }, map: map });%n", id, lat, lon);
-            out.printf("        marker%d.addListener('click', function() { window.location.href = '/sandhurst/house/%d'; });%n", id, id);
-            out.printf("        bounds.extend(marker%d.getPosition());%n", id);
+            out.printf("        const latlng%d = new google.maps.LatLng(%.7f, %.7f);%n", id, lat, lon);
+            out.printf("        const marker%d = new google.maps.Marker({%n", id);
+            out.printf("            position: latlng%d,%n", id);
+            out.println("            map: map,");
+            out.println("            icon: \"https://maps.google.com/mapfiles/ms/icons/purple-dot.png\"");
+            out.println("        });");
+
+            // Click navigates to house page
+            out.printf("        marker%d.addListener('click', function() {%n", id);
+            out.printf("            window.location.href = '/sandhurst/house/%d';%n", id);
+            out.println("        });");
+
+            // Hover shows bold address in info window
+            out.printf("        marker%d.addListener('mouseover', function() {%n", id);
+            out.printf("            infoWindow.setContent('<b>%s</b>');%n", safeAddress);
+            out.printf("            infoWindow.open(map, marker%d);%n", id);
+            out.println("        });");
+
+            out.printf("        bounds.extend(latlng%d);%n", id);
         }
 
         out.println("        map.fitBounds(bounds);");
+
+        // Hide the close (X) button when info window opens
+        out.println("        google.maps.event.addListener(infoWindow, 'domready', function() {");
+        out.println("            const iwCloseBtn = document.querySelector('.gm-ui-hover-effect');");
+        out.println("            if (iwCloseBtn) iwCloseBtn.style.display = 'none';");
+        out.println("        });");
+
         out.println("      }");
         out.println("      window.onload = initMap;");
         out.println("    </script>");
         out.println("    <style>");
-        out.println("      html, body { height: 100%%; margin: 0; padding: 0; }");
-        out.println("      #map { height: 90vh; width: 100%%; }");
+        out.println("      html, body { height: 100%; margin: 0; padding: 0; }");
+        out.println("      #map { height: 90vh; width: 100%; }");
         out.println("      #topbar { padding: 10px; }");
         out.println("    </style>");
         out.println("</head>");

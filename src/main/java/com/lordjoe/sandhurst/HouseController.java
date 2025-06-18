@@ -13,6 +13,6 @@ public class HouseController {
         if (house == null) {
             return "<html><body><h1>House not found</h1><a href='/sandhurst'>Back to Sandhurst</a></body></html>";
         }
-        return HousePageGenerator.generateHousePage(house);
+        return HousePageMaker.generate(house);
     }
 }

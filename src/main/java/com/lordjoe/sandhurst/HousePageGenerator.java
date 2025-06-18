@@ -19,8 +19,9 @@ public class HousePageGenerator {
         out.printf("<p>Latitude: %.6f</p>%n", house.getLatitude());
         out.printf("<p>Longitude: %.6f</p>%n", house.getLongitude());
 
-        if (house.getImageUrl() != null && !house.getImageUrl().isEmpty()) {
-            out.printf("<img src=\"%s\" alt=\"House photo\" style=\"max-width:400px;\"/>%n", house.getImageUrl());
+        String imageUrl = HouseImageResolver.getImageUrl(house);
+        if (imageUrl != null && !imageUrl.isEmpty()) {
+            out.printf("<img src=\"%s\" alt=\"House photo\" style=\"max-width:400px;\"/>%n", imageUrl);
         }
 
         out.println("<br><button onclick=\"location.href='/sandhurst'\">Sandhurst</button>");

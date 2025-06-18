@@ -15,7 +15,8 @@ public class Database {
             System.out.println("Resetting database tables...");
             // old
             stmt.executeUpdate("DROP TABLE IF EXISTS   HOUSE");
- 
+            stmt.executeUpdate("DROP TABLE IF EXISTS   Inhabitant");
+
 
 
             System.out.println("Tables dropped.");
@@ -28,6 +29,16 @@ public class Database {
              Statement stmt = conn.createStatement()) {
 
             // Create the main table first
+            stmt.executeUpdate("""
+                         CREATE TABLE inhabitant (
+                             id SERIAL PRIMARY KEY,
+                             resource_id INT NOT NULL REFERENCES house(id) ON DELETE CASCADE,
+                             name TEXT NOT NULL,
+                             phone TEXT,         -- Multi-line or comma-separated
+                             email TEXT,
+                        type TEXT NOT NULL CHECK (type IN ('Adult', 'Child', 'Pet', 'Other')),
+               )
+                    """);
             stmt.executeUpdate("""
                     CREATE TABLE house (
                         id SERIAL PRIMARY KEY,
