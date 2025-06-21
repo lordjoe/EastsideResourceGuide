@@ -19,12 +19,38 @@ public class HousePageGenerator {
         out.printf("<p>Latitude: %.6f</p>%n", house.getLatitude());
         out.printf("<p>Longitude: %.6f</p>%n", house.getLongitude());
 
+        out.println("""
+                    <br>
+                    <a href="/sandhurst" style="
+                        display: inline-block;
+                        padding: 8px 16px;
+                        background-color: #4b0082;
+                        color: white;
+                        text-decoration: none;
+                        border-radius: 6px;
+                        font-weight: bold;
+                        font-family: sans-serif;
+                    ">Sandhurst</a>
+                """);
+
         String imageUrl = HouseImageResolver.getImageUrl(house);
         if (imageUrl != null && !imageUrl.isEmpty()) {
             out.printf("<img src=\"%s\" alt=\"House photo\" style=\"max-width:400px;\"/>%n", imageUrl);
         }
 
-        out.println("<br><button onclick=\"location.href='/sandhurst'\">Sandhurst</button>");
+        out.println("""
+                    <br>
+                    <a href="/sandhurst" style="
+                        display: inline-block;
+                        padding: 8px 16px;
+                        background-color: #4b0082;
+                        color: white;
+                        text-decoration: none;
+                        border-radius: 6px;
+                        font-weight: bold;
+                        font-family: sans-serif;
+                    ">Sandhurst</a>
+                """);
         out.println("</body>");
         out.println("</html>");
 

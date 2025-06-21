@@ -11,6 +11,8 @@ public class SandhurstDatabaseInitializer {
         Database.clearDatabase();
         Database.createDatabase();
         Database.loadHousesFromTSV("kirkland_houses.tsv");
+        Database.loadInhabitantsFromTSV("sandhurst_people.csv");
+        Neighborhood.loadInHabitants();
     }
 }
 
