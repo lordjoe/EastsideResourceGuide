@@ -60,6 +60,18 @@ public class WordDocParser {
         return rs;
     }
 
+    private static boolean isStruckThrough(XWPFParagraph para) {
+        boolean hasText = false;
+        for (XWPFRun run : para.getRuns()) {
+            String text = run.text();
+            if (text != null && !text.trim().isEmpty()) {
+                hasText = true;
+                if (!run.isStrikeThrough()) return false;
+            }
+        }
+        return hasText; // Only skip if paragraph has text and all runs are struck
+    }
+
     private static void handleItems(ParagraphIterator items,
                                     Stack<CommunityResource> resourceStack, Stack<List<String>> descriptions,  boolean inList) throws Exception {
         CommunityResource activeResource = resourceStack.lastElement();
@@ -78,6 +90,10 @@ public class WordDocParser {
                 activeResource = resourceStack.lastElement();
                 currentDescriptions = descriptions.lastElement();
                 XWPFParagraph para = items.next();
+
+                if (isStruckThrough(para)) {
+                    continue; // Skip struck-through paragraphs
+                }
                 String text = para.getText().trim();
 
 
