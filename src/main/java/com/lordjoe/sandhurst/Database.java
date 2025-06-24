@@ -15,6 +15,7 @@ public class Database {
             // old
             stmt.executeUpdate("DROP TABLE IF EXISTS   Inhabitant");
             stmt.executeUpdate("DROP TABLE IF EXISTS   HOUSE");
+            stmt.executeUpdate("DROP TABLE IF EXISTS   image_asset");
 
 
             System.out.println("Tables dropped.");
@@ -45,6 +46,14 @@ public class Database {
                             email TEXT,
                             type TEXT NOT NULL CHECK (type IN ('Adult', 'Child', 'Pet', 'Other'))
                         )
+                    """);
+            stmt.executeUpdate("""
+                    CREATE TABLE image_asset (
+                            id SERIAL PRIMARY KEY,
+                            source_id INT NOT NULL,
+                            source_type TEXT NOT NULL CHECK (source_type IN ('house', 'inhabitant')),
+                            image_url TEXT NOT NULL
+                    ) 
                     """);
 
             System.out.println("Tables created.");
@@ -108,7 +117,7 @@ public class Database {
 
                 while (scanner.hasNextLine()) {
                     String line = scanner.nextLine();
-                    if(line.length() == 0) continue;
+                    if (line.length() == 0) continue;
                     System.out.println(line);
                     try {
                         String[] parts = line.split("\t");
