@@ -2,7 +2,10 @@ package com.lordjoe.sandhurst ;
 
 import java.sql.Connection;
 import java.sql.PreparedStatement;
+import java.sql.ResultSet;
 import java.sql.SQLException;
+import java.util.ArrayList;
+import java.util.List;
 
 public class ImageAssetDAO {
 
@@ -23,4 +26,29 @@ public class ImageAssetDAO {
             stmt.executeUpdate();
         }
     }
+
+    public List<ImageAsset> getImagesForInhabitant(int inhabitantId) {
+        List<ImageAsset> results = new ArrayList<>();
+        try (PreparedStatement stmt = connection.prepareStatement(
+                "SELECT * FROM image_asset WHERE source_id = ? AND source_type = 'Inhabitant'")) {
+            stmt.setInt(1, inhabitantId);
+            ResultSet rs = stmt.executeQuery();
+            while (rs.next()) {
+                results.add(fromResultSet(rs));
+            }
+        } catch (SQLException e) {
+            throw new RuntimeException("Error fetching images", e);
+        }
+        return results;
+    }
+
+    private ImageAsset fromResultSet(ResultSet rs) throws SQLException {
+        ImageAsset asset = new ImageAsset();
+        asset.setId(rs.getInt("id"));
+        asset.setSourceId(rs.getInt("source_id"));
+        asset.setSourceType(ImageAssetType.valueOf(rs.getString("source_type")));
+        asset.setImageUrl(rs.getString("image_url"));
+        return asset;
+    }
+
 }

@@ -1,5 +1,8 @@
 package com.lordjoe.sandhurst;
 
+import java.util.ArrayList;
+import java.util.List;
+
 public class Inhabitant {
     private int id;
     private int resourceId; // Foreign key to House.id
@@ -7,6 +10,7 @@ public class Inhabitant {
     private String phone;
     private String email;
     private InhabitantType type;
+    public final List<ImageAsset> images = new ArrayList<ImageAsset>() ;
 
     public Inhabitant(int id, int resourceId, String name, String phone, String email, InhabitantType type) {
         this.id = id;
@@ -72,5 +76,17 @@ public class Inhabitant {
 
     public House getHouse() {
        return Neighborhood.Instance.getHouse(resourceId);
+    }
+
+    public List<ImageAsset> getImages() {
+        return new ArrayList<>(images);
+    }
+
+    public void addImage(ImageAsset image) {
+        images.add(image);
+    }
+
+    public void removeImage(ImageAsset image) {
+        images.remove(image);
     }
 }

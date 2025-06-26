@@ -15,9 +15,8 @@ import java.util.UUID;
 
 public class ImageUtilities {
 
-    public static final ImageUtilities[] EMPTY_ARRAY = {};
 
-    public String uploadImage(byte[] fileBytes, int sourceId, ImageAssetType sourceType) throws Exception {
+    public static String uploadImage(byte[] fileBytes, int sourceId, ImageAssetType sourceType) throws Exception {
         BufferedImage original = ImageIO.read(new ByteArrayInputStream(fileBytes));
 
         ByteArrayOutputStream os = new ByteArrayOutputStream();
@@ -39,7 +38,7 @@ public class ImageUtilities {
         return imageUrl;
     }
 
-    private BufferedImage resizeImage(BufferedImage originalImage) {
+    private static BufferedImage resizeImage(BufferedImage originalImage) {
         int maxWidth = 1024;
         int width = Math.min(originalImage.getWidth(), maxWidth);
         int height = (originalImage.getHeight() * width) / originalImage.getWidth();

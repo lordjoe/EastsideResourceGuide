@@ -16,14 +16,11 @@ public class SecurityConfig {
                 .csrf(csrf -> csrf.disable())
                 .authorizeHttpRequests(auth -> auth
                         // ✅ exact match, no trailing slash
-                        .requestMatchers("/sandhurst").permitAll()
-                        // ✅ allow everything public before auth rules
-                        .requestMatchers(
+                          .requestMatchers(
                                 "/", "/main", "/category", "/subcategory", "/resource",
-                                "/login", "/logout", "/error",
-                                "/sandhurst",
-                                "/sandhurst/house/**",
-                                "/Cover.png", "/favicon.ico",
+                                "/login", "/logout", "/error", "/sandhurst/editInhabitant",
+                                "/sandhurst", "/sandhurst/house/**",
+                                  "/Cover.png", "/favicon.ico",
                                 "/css/**", "/js/**", "/images/**", "/**/*.css", "/**/*.js", "/**/*.png"
                         ).permitAll()
                         // ✅ restrict edit/admin routes

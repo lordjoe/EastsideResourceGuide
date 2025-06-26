@@ -9,6 +9,7 @@ public class House {
     public final double longitude;
     public final String address;
     public final List<Inhabitant> inhabitants = new ArrayList<Inhabitant>() ;
+    public final List<ImageAsset> images = new ArrayList<ImageAsset>() ;
 
     public int getId() {
         return id;
@@ -39,5 +40,17 @@ public class House {
 
     public void addInhabitant(Inhabitant inhabitant) {
         inhabitants.add(inhabitant);
+    }
+
+    public List<ImageAsset> getImages() {
+        return new ArrayList<>(images);
+    }
+
+    public void addImage(ImageAsset image) {
+        images.add(image);
+    }
+
+    public void removeImage(ImageAsset image) {
+        images.remove(image);
     }
 }

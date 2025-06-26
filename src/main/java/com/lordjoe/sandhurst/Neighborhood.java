@@ -19,6 +19,7 @@ public class Neighborhood {
 
     private final List<House> houses;
     private final Map<Integer, House> idToHouse = new HashMap<Integer, House>();
+    private final Map<Integer, Inhabitant> idToInhabitant = new HashMap<Integer, Inhabitant>();
     private final Map<String, House> addressToHouse = new HashMap<String, House>();
 
 
@@ -39,6 +40,11 @@ public class Neighborhood {
             catch (SQLException ex)   {
                 ex.printStackTrace();
             }
+        for (House house : Instance.getHouses()) {
+            for (Inhabitant inhabitant : house.getInhabitants()) {
+                Instance.idToInhabitant.put(inhabitant.getId(), inhabitant);
+            }
+        }
         }
 
 
@@ -52,5 +58,9 @@ public class Neighborhood {
 
     public House getHouse(String address) {
         return addressToHouse.get(address);
+    }
+
+    public Inhabitant getInhabitantById(int id) {
+        return idToInhabitant.get(id);
     }
 }

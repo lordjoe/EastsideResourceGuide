@@ -1,14 +1,12 @@
 package com.lordjoe.sandhurst;
 
-
-import jakarta.servlet.http.Cookie;
 import jakarta.servlet.http.HttpServletRequest;
 
 public class HousePageMaker {
 
     public static String generate(House house, HttpServletRequest request) {
         String apiKey = MapsKeyFetcher.getMapsApiKey();
-        boolean isAuthorized = isUserAuthorized(request);
+        boolean isAuthorized = Login.isUserAuthorized(request);
 
         StringBuilder html = new StringBuilder();
         html.append("<html>\n")
@@ -38,6 +36,20 @@ public class HousePageMaker {
                 .append("&location=").append(house.getLatitude()).append(",").append(house.getLongitude())
                 .append("&key=").append(apiKey).append("\" alt=\"House Image\" /><br/><br/>\n");
 
+        // House Images
+        html.append("<h3>House Images</h3>\n");
+        for (ImageAsset image : house.getImages()) {
+            html.append("<div style='margin:10px 0;'>")
+                    .append("<img src='" + image.getImageUrl() + "' width='300' /><br/>");
+            if (isAuthorized) {
+                html.append("<form method='POST' action='/sandhurst/deleteImage'>")
+                        .append("<input type='hidden' name='imageId' value='").append(image.getId()).append("'/>")
+                        .append("<button type='submit'>Delete Image</button>")
+                        .append("</form>");
+            }
+            html.append("</div>\n");
+        }
+
         // Inhabitants
         html.append("<h3>Inhabitants</h3>\n<ul>\n");
         for (Inhabitant inh : house.getInhabitants()) {
@@ -49,6 +61,14 @@ public class HousePageMaker {
             if (inh.getEmail() != null && !inh.getEmail().isEmpty())
                 html.append(" | <a href=\"mailto:").append(inh.getEmail()).append("\">").append(inh.getEmail()).append("</a>");
             html.append(" (").append(type).append(")");
+
+            if (isAuthorized) {
+                html.append(" <form action='/sandhurst/editInhabitant' method='GET' style='display:inline;'>")
+                        .append("<input type='hidden' name='inhabitantId' value='").append(inh.getId()).append("'/>")
+                        .append("<button type='submit'>Edit</button>")
+                        .append("</form>");
+            }
+
             html.append("</li>\n");
         }
         html.append("</ul>\n");
@@ -63,16 +83,5 @@ public class HousePageMaker {
 
         html.append("</body>\n</html>\n");
         return html.toString();
-    }
-
-    private static boolean isUserAuthorized(HttpServletRequest request) {
-        if (request == null) return false;
-        if (request.getCookies() == null) return false;
-        for (Cookie cookie : request.getCookies()) {
-            if ("authorized".equals(cookie.getName()) && "true".equals(cookie.getValue())) {
-                return true;
-            }
-        }
-        return false;
     }
 }

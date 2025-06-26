@@ -3,32 +3,29 @@ package com.lordjoe.sandhurst;
 public class ImageAsset {
     private int id;
     private int sourceId;
-    private ImageAssetType sourceType; // "house" or "inhabitant"
+    private ImageAssetType sourceType;
     private String imageUrl;
 
-    public ImageAsset(int sourceId,ImageAssetType sourceType, String imageUrl) {
+    public ImageAsset() {
+        // Needed for DAO and deserialization
+    }
+
+    public ImageAsset(int sourceId, ImageAssetType sourceType, String imageUrl) {
         this.sourceId = sourceId;
         this.sourceType = sourceType;
         this.imageUrl = imageUrl;
     }
 
-    public int getSourceId() {
-        return sourceId;
-    }
+    // Getters and setters
+    public int getId() { return id; }
+    public void setId(int id) { this.id = id; }
 
-    public ImageAssetType getSourceType() {
-        return sourceType;
-    }
+    public int getSourceId() { return sourceId; }
+    public void setSourceId(int sourceId) { this.sourceId = sourceId; }
 
-    public String getImageUrl() {
-        return imageUrl;
-    }
+    public ImageAssetType getSourceType() { return sourceType; }
+    public void setSourceType(ImageAssetType sourceType) { this.sourceType = sourceType; }
 
-    public void setId(int id) {
-        this.id = id;
-    }
-
-    public int getId() {
-        return id;
-    }
+    public String getImageUrl() { return imageUrl; }
+    public void setImageUrl(String imageUrl) { this.imageUrl = imageUrl; }
 }
