@@ -10,6 +10,12 @@ public class ImageAsset {
         // Needed for DAO and deserialization
     }
 
+    public ImageAsset(int id, ImageAssetType type, int sourceId, String imageUrl) {
+        this.id = id;
+        this.sourceType = type;
+        this.sourceId = sourceId;
+        this.imageUrl = imageUrl;
+    }
     public ImageAsset(int sourceId, ImageAssetType sourceType, String imageUrl) {
         this.sourceId = sourceId;
         this.sourceType = sourceType;

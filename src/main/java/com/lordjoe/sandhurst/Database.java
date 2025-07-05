@@ -2,7 +2,10 @@ package com.lordjoe.sandhurst;
 
 import com.lordjoe.resource_guide.util.DatabaseConnection;
 
+import java.io.File;
 import java.sql.*;
+import java.util.ArrayList;
+import java.util.List;
 import java.util.Map;
 
 public class Database {
@@ -99,6 +102,60 @@ public class Database {
         }
     }
 
+    public static void loadParcelsFromTSV(File f) throws Exception {
+           Neighborhood n = Neighborhood.Instance;
+
+            // Use \COPY if from psql or load line by line
+            System.out.println("Loading house data from " + f.getName());
+
+            try (java.util.Scanner scanner = new java.util.Scanner(f)) {
+                if (scanner.hasNextLine()) scanner.nextLine(); // skip header
+                while (scanner.hasNextLine()) {
+                    String line = scanner.nextLine();
+                    System.out.println(line);
+                         String[] parts = line.split("\t");
+                        if (parts.length == 7) {
+                            String address = parts[2].trim();
+                            House h = n.findHouse(address);
+                            if(h != null) {
+                                String people = parts[1];
+                                List<String> persons = parsePeople(people);
+                                for (String person : persons) {
+                                    Inhabitant inhabitant = h.findInhabitant(person);
+                                    if(inhabitant != null) {
+                                        System.out.println(h.address + " " + inhabitant.getName());
+                                    }
+                                }
+                            }
+                        } else {
+                            System.out.println("Invalid data line: " + line);
+                        }
+              }
+
+            System.out.println("House data loaded.");
+           }
+    }
+
+    protected static List<String> parsePeople(String persons) {
+        persons.replace("+","&");
+        List<String> ret = new ArrayList<>();
+        if(!persons.contains("&") )  {
+            ret.add(persons);
+            return ret;
+        }
+        String[] parts = persons.split("&");
+        ret.add(parts[0].trim());
+        parts[1] = parts[1].trim();
+        if(parts[1].contains(" ")) {
+            ret.add(parts[1]);
+            return ret;
+        }
+        String[] partsX = parts[1].split(" ");
+        String other  = parts[2] + " " + partsX[0];
+        ret.add(other);
+        return ret;
+
+    }
 
     public static void loadInhabitantsFromTSV(String filePath) throws Exception {
         Map<String, Integer> addressMap = AddressUtils.buildNormalizedAddressMap(Neighborhood.Instance.getHouses());

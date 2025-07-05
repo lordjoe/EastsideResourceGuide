@@ -7,6 +7,9 @@ WORKDIR /app
 # Copy the Spring Boot JAR
 COPY target/EastsideResourceGuide-1.0-SNAPSHOT.jar app.jar
 
+# add firebase secret
+COPY src/main/resources/firebase-secret.json /app/firebase-secret.json
+
 # Expose the Spring Boot default port
 EXPOSE 8080
 

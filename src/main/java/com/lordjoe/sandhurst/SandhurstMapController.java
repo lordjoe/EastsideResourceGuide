@@ -37,6 +37,6 @@ public class SandhurstMapController {
         return EditInhabitantPageMaker.generate(inh);
     }
 
-
+ 
 }
 

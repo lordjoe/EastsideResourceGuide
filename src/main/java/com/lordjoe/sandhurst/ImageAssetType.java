@@ -6,6 +6,6 @@ package com.lordjoe.sandhurst;
  * Date: 6/24/25
  */
 public enum ImageAssetType {
-    Inhabitant,House;
+    inhabitant,house;
 
 }

@@ -1,7 +1,9 @@
 package com.lordjoe.sandhurst;
 
-import java.util.ArrayList;
-import java.util.List;
+import com.lordjoe.resource_guide.util.NameSimilarityUtil;
+import org.springframework.security.web.util.matcher.RequestMatcher;
+
+import java.util.*;
 
 public class House {
     public final int id;
@@ -36,6 +38,23 @@ public class House {
 
     public List<Inhabitant> getInhabitants() {
         return inhabitants;
+    }
+
+    public Inhabitant findInhabitant(String name) {
+         Map<String,Inhabitant> byName = new HashMap<String,Inhabitant>() ;
+         List<String> names = new ArrayList<>();
+        for (Inhabitant inhabitant : inhabitants) {
+            byName.put(inhabitant.getName(),inhabitant);
+            names.add(name);
+        }
+        if (byName.containsKey(name)) {
+            return byName.get(name);
+        }
+        NameSimilarityUtil.MatchResult bestMatch = NameSimilarityUtil.findBestMatch(name, names);
+        if(bestMatch.isConfidentMatch(0.6)) {
+            return byName.get(RequestMatcher.MatchResult.match().toString());
+        }
+        return null;
     }
 
     public void addInhabitant(Inhabitant inhabitant) {

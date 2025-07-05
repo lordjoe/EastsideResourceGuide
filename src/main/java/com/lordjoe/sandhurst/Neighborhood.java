@@ -2,9 +2,12 @@ package com.lordjoe.sandhurst;
 
 
 import com.lordjoe.resource_guide.util.DatabaseConnection;
+import com.lordjoe.resource_guide.util.NameSimilarityUtil;
+import org.springframework.security.web.util.matcher.RequestMatcher;
 
 import java.sql.Connection;
 import java.sql.SQLException;
+import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -28,7 +31,7 @@ public class Neighborhood {
         houses = HouseLoader.loadAllHouses();
         for (House house : houses) {
             idToHouse.put(house.getId(), house);
-            addressToHouse.put(house.getAddress(), house);
+            addressToHouse.put(house.getAddress().toUpperCase() , house);
         }
     }
 
@@ -57,8 +60,25 @@ public class Neighborhood {
     }
 
     public House getHouse(String address) {
-        return addressToHouse.get(address);
+        return addressToHouse.get(address.toUpperCase());
     }
+
+    public House findHouse(String address) {
+        House ret = getHouse(address);
+        if (ret != null) {
+            return ret;
+        }
+        address = address.toUpperCase();
+       List<String> addresses = new ArrayList<String>(addressToHouse.keySet());
+        NameSimilarityUtil.MatchResult bestMatch = NameSimilarityUtil.findBestMatch(address, addresses);
+        if(bestMatch.isConfidentMatch(0.6)) {
+           return getHouse(RequestMatcher.MatchResult.match().toString());
+        }
+        return null;
+    }
+
+
+
 
     public Inhabitant getInhabitantById(int id) {
         return idToInhabitant.get(id);

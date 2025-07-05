@@ -15,17 +15,14 @@ public class SecurityConfig {
         http
                 .csrf(csrf -> csrf.disable())
                 .authorizeHttpRequests(auth -> auth
-                        // ✅ exact match, no trailing slash
-                          .requestMatchers(
+                        .requestMatchers(
                                 "/", "/main", "/category", "/subcategory", "/resource",
                                 "/login", "/logout", "/error", "/sandhurst/editInhabitant",
                                 "/sandhurst", "/sandhurst/house/**",
-                                  "/Cover.png", "/favicon.ico",
-                                "/css/**", "/js/**", "/images/**", "/**/*.css", "/**/*.js", "/**/*.png"
+                                "/Cover.png", "/favicon.ico",
+                                "/css/**", "/js/**", "/images/**"
                         ).permitAll()
-                        // ✅ restrict edit/admin routes
                         .requestMatchers("/admin/**", "/edit/**").authenticated()
-                        // ✅ fallback for unknown paths
                         .anyRequest().permitAll()
                 )
                 .formLogin(form -> form
@@ -39,7 +36,7 @@ public class SecurityConfig {
                         .invalidateHttpSession(true)
                         .deleteCookies("JSESSIONID")
                         .permitAll()
-                ); // only disable if no CSRF tokens are used in forms
+                );
 
         return http.build();
     }
