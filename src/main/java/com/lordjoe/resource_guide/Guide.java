@@ -1,19 +1,23 @@
 package com.lordjoe.resource_guide;
 
-import com.lordjoe.resource_guide.dao.CommunityResourceDAO;
-import com.lordjoe.resource_guide.dao.ResourceDescriptionDAO;
-import com.lordjoe.resource_guide.dao.ResourceSiteDAO;
-import com.lordjoe.resource_guide.dao.ResourceType;
+import com.lordjoe.resource_guide.dao.*;
 import com.lordjoe.resource_guide.model.CommunityResource;
 import com.lordjoe.resource_guide.model.ResourceDescription;
 import com.lordjoe.resource_guide.model.ResourceSite;
+import com.lordjoe.resource_guide.security.GuideUser;
 import com.lordjoe.resource_guide.util.DatabaseConnection;
+import com.lordjoe.utilities.Encrypt;
 
+import java.sql.Connection;
+import java.sql.ResultSet;
 import java.sql.SQLException;
+import java.sql.Statement;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+
+import static com.lordjoe.resource_guide.Database.createDatabase;
 
 /**
  * Loads the complete guide structure from the database into memory.
@@ -26,6 +30,7 @@ public class Guide {
     private final Map<Integer, Resource> idToResource = new HashMap<>();
     private final Map<Integer, Resource> idToBlock = new HashMap<>();
     private final List<Catagory> catagories = new ArrayList<>();
+    private final Map<String, GuideUser> userMap = new HashMap<>();
 
     private boolean loaded = false;
 
@@ -108,6 +113,7 @@ public class Guide {
         Map<Integer, ResourceSite> sites = ResourceSiteDAO.loadAllAsMap();
         Map<Integer, List<ResourceDescription>> blockd = mapBlockResources(descriptions);
 
+        createDatabase(); // make sure tablews exist
         // First pass: categories and subcategories
         for (CommunityResource cr : allResources.values()) {
             ResourceType type = cr.getType();
@@ -195,10 +201,35 @@ public class Guide {
 
             }
         }
-
+        loadUsers();
         loaded = true;
     }
 
+    public void loadUsers() {
+        userMap.clear();
+        UserDAO.guaranteeUser("admin", Encrypt.encryptString("Sulphur32"));
+        UserDAO.guaranteeUser("lordjoe2000@gmail.com", Encrypt.encryptString("Sulphur32"));
+
+        try (Connection conn = DatabaseConnection.getConnection();
+             Statement stmt = conn.createStatement();
+             ResultSet rs = stmt.executeQuery("SELECT username, password, role FROM users")) {
+
+            while (rs.next()) {
+                String username = rs.getString("username");
+                String encryptedPassword = rs.getString("password");
+                String role = rs.getString("role");
+                GuideUser user = new GuideUser(username, encryptedPassword, role);
+                userMap.put(username, user);
+            }
+         } catch (SQLException e) {
+            throw new RuntimeException("Failed to load users", e);
+        }
+    }
+
+    public GuideUser getUserByUsername(String username) {
+        return userMap.get(username);
+    }
+    
     private Map<Integer, List<ResourceDescription>> mapBlockResources(Map<Integer, List<ResourceDescription>> descriptions) {
         if (descriptions == null)
             return null;

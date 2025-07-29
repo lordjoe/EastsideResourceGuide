@@ -31,7 +31,7 @@ public class Database {
              Statement stmt = conn.createStatement()) {
 
             stmt.executeUpdate("""
-                    CREATE TABLE house (
+                    CREATE TABLE IF NOT EXISTS house (
                         id SERIAL PRIMARY KEY,
                         address TEXT NOT NULL,
                         latitude DOUBLE PRECISION,
@@ -41,7 +41,7 @@ public class Database {
 
             // Create the main table first
             stmt.executeUpdate("""
-                        CREATE TABLE inhabitant (
+                        CREATE  TABLE IF NOT EXISTS inhabitant (
                             id SERIAL PRIMARY KEY,
                             resource_id INT NOT NULL REFERENCES house(id) ON DELETE CASCADE,
                             name TEXT NOT NULL,

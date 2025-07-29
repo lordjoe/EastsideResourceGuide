@@ -3,10 +3,7 @@ package com.lordjoe.resource_guide;
 import com.lordjoe.resource_guide.util.CategoryUtils;
 import com.lordjoe.resource_guide.util.DatabaseConnection;
 
-import java.sql.Connection;
-import java.sql.PreparedStatement;
-import java.sql.ResultSet;
-import java.sql.Statement;
+import java.sql.*;
 
 public class Database {
 
@@ -33,13 +30,13 @@ public class Database {
         }
     }
 
-    public static void createDatabase() throws Exception {
+    public static void createDatabase() throws SQLException {
         try (Connection conn = DatabaseConnection.getConnection();
              Statement stmt = conn.createStatement()) {
 
             // Create main table first
             stmt.executeUpdate("""
-            CREATE TABLE community_resources (
+            CREATE TABLE IF NOT EXISTS community_resources (
                 id SERIAL PRIMARY KEY,
                 name TEXT NOT NULL,
                 type TEXT NOT NULL CHECK (type IN ('Category', 'Subcategory', 'Resource', 'Block')),
@@ -47,11 +44,13 @@ public class Database {
             )
         """);
 
-            // Now it's safe to insert the default category
-            Catagory unclassified = CategoryUtils.CreateCatagory("Unclassified");
+            // Insert default category if it doesn't exist
+            if (CategoryUtils.getCategoryByName("Unclassified") == null) {
+                CategoryUtils.CreateCatagory("Unclassified");
+            }
 
             stmt.executeUpdate("""
-            CREATE TABLE resource_descriptions (
+            CREATE TABLE IF NOT EXISTS resource_descriptions (
                 id SERIAL PRIMARY KEY,
                 resource_id INT NOT NULL REFERENCES community_resources(id) ON DELETE CASCADE,
                 content TEXT NOT NULL,
@@ -60,22 +59,32 @@ public class Database {
         """);
 
             stmt.executeUpdate("""
-            CREATE TABLE resource_sites (
+            CREATE TABLE IF NOT EXISTS resource_sites (
                 id SERIAL PRIMARY KEY,
                 resource_id INT NOT NULL REFERENCES community_resources(id) ON DELETE CASCADE,
-                phone TEXT,         -- Multi-line or comma-separated
+                phone TEXT,
                 email TEXT,
-                website TEXT,       -- Comma-separated
-                address TEXT,       -- Multi-line
+                website TEXT,
+                address TEXT,
                 hours TEXT,
                 notes TEXT
             )
         """);
 
-            System.out.println("Tables created.");
+            stmt.executeUpdate("""
+            CREATE TABLE IF NOT EXISTS users (
+                id SERIAL PRIMARY KEY,
+                username TEXT UNIQUE NOT NULL,
+                password TEXT NOT NULL,
+                role TEXT NOT NULL DEFAULT 'USER'
+            )
+        """);
+
+            System.out.println("Tables created if they did not already exist.");
             DatabaseConnection.clearConnection();
         }
     }
+
 
 
 

@@ -10,7 +10,6 @@ import jakarta.servlet.http.HttpServletResponse;
 import org.springframework.stereotype.Controller;
 import org.springframework.ui.Model;
 import org.springframework.web.bind.annotation.GetMapping;
-import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.ResponseBody;
 
@@ -36,19 +35,20 @@ public class ResourceGuideController {
         return generateHomePage(categories, request);
     }
 
-    @PostMapping("/logout")
-    public void logout(HttpServletRequest request, HttpServletResponse response) throws IOException {
-        // Clear login token cookie
+    @GetMapping("/logout")
+    public String logout(HttpServletResponse response) {
+        // Invalidate the token cookie by clearing it
         Cookie cookie = new Cookie("EASTSIDE_LOGIN_TOKEN", null);
         cookie.setPath("/");
-        cookie.setMaxAge(0); // expire it immediately
+        cookie.setMaxAge(0); // delete it
         response.addCookie(cookie);
 
-        // Also invalidate session if you’re using it for anything
-        request.getSession().invalidate();
+        // Optionally invalidate session if you're using sessions
+        // request.getSession().invalidate();
 
-        response.sendRedirect("/login?logout=true");
+        return "redirect:/login?logout=true";
     }
+
 
     public String generateHomePage(List<Catagory> categories, HttpServletRequest request) {
         StringBuilder html = new StringBuilder();

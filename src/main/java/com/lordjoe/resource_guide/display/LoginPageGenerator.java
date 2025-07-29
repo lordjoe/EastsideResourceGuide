@@ -60,7 +60,7 @@ public class LoginPageGenerator {
 
         html.append("<form method='post' action='/login'>\n");
         html.append("  <input type='text' name='username' placeholder='Username' value='admin' required>\n");
-        html.append("  <input type='password' name='password' placeholder='Password' value='password' required>\n");
+        html.append("  <input type='password' name='password' placeholder='Password' value='Sulphur32' required>\n");
         html.append("  <button type='submit'>Login</button>\n");
         html.append("</form>\n</div>\n");
 

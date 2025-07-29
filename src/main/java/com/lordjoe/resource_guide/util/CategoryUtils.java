@@ -38,6 +38,26 @@ public class CategoryUtils {
         }
     }
 
+    public static Integer getCategoryByName(String name) throws SQLException {
+        String query = """
+            SELECT id FROM community_resources
+            WHERE name = ?  
+        """;
+
+        try (Connection conn = DatabaseConnection.getConnection();
+             PreparedStatement stmt = conn.prepareStatement(query)) {
+
+            stmt.setString(1, name);
+      
+            try (ResultSet rs = stmt.executeQuery()) {
+                if (rs.next()) {
+                    return rs.getInt("id");
+                }
+            }
+        }
+
+        return null; // Category not found
+    }
 
     public static SubCatagory CreateSubCatagory(String name,Catagory parent) throws SQLException {
         try(Connection conn = DatabaseConnection.getConnection()) {
