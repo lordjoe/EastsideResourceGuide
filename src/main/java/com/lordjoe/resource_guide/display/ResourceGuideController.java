@@ -38,12 +38,16 @@ public class ResourceGuideController {
 
     @PostMapping("/logout")
     public void logout(HttpServletRequest request, HttpServletResponse response) throws IOException {
-        request.getSession().invalidate();
-        Cookie cookie = new Cookie("JSESSIONID", null);
+        // Clear login token cookie
+        Cookie cookie = new Cookie("EASTSIDE_LOGIN_TOKEN", null);
         cookie.setPath("/");
-        cookie.setMaxAge(0);
+        cookie.setMaxAge(0); // expire it immediately
         response.addCookie(cookie);
-        response.sendRedirect("/");
+
+        // Also invalidate session if you’re using it for anything
+        request.getSession().invalidate();
+
+        response.sendRedirect("/login?logout=true");
     }
 
     public String generateHomePage(List<Catagory> categories, HttpServletRequest request) {
@@ -97,10 +101,15 @@ public class ResourceGuideController {
 
     @GetMapping("/login")
     @ResponseBody
-    public String loginPage(@RequestParam(value = "error", required = false) String error) {
-        String errorMessage = (error != null) ? "<p style='color:red;'>Invalid username or password</p>" : "";
-        return LoginPageGenerator.generateLoginPage(errorMessage.length() > 0);
+    public String loginPage(
+            @RequestParam(value = "error", required = false) String error,
+            @RequestParam(value = "logout", required = false) String logout
+    ) {
+        boolean showError = (error != null);
+        boolean showLogout = (logout != null);
+        return LoginPageGenerator.generateLoginPage(showError, showLogout);
     }
+
 
     private void addCSS(StringBuilder html) {
         html.append("<style>");

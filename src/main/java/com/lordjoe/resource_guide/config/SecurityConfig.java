@@ -1,5 +1,6 @@
 package com.lordjoe.resource_guide.config;
 
+import jakarta.servlet.http.Cookie;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.security.config.annotation.web.builders.HttpSecurity;
@@ -34,6 +35,16 @@ public class SecurityConfig {
                         .loginPage("/login")
                         .defaultSuccessUrl("/main", true)
                         .failureUrl("/login?error=true")
+                        .successHandler((request, response, authentication) -> {
+                            // 🔐 Set your login cookie
+                            Cookie loginCookie = new Cookie("EASTSIDE_LOGIN_TOKEN", "valid");
+                            loginCookie.setPath("/");
+                            loginCookie.setMaxAge(2 * 60 * 60); // 2 hours
+                            response.addCookie(loginCookie);
+
+                            // 🔁 Redirect manually (replaces defaultSuccessUrl)
+                            response.sendRedirect("/main");
+                        })
                         .permitAll()
                 )
                 .logout(logout -> logout
