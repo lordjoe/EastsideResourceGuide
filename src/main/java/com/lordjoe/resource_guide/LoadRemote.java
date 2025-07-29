@@ -8,9 +8,9 @@ import com.lordjoe.resource_guide.util.DatabaseConnection;
  * Date: 5/5/25
  */
 public class LoadRemote {
-    public static final LoadRemote[] EMPTY_ARRAY = {};
 
-    public static void main(String[] args) {
+
+    public static void main(String[] args) throws Exception {
         DatabaseConnection.setREMOTE();
         MainApp.main(args);
     }

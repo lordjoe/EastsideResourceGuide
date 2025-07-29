@@ -96,9 +96,10 @@ public class DatabaseConnection {
             if(!REMOTE)
               return DriverManager.getConnection(getUsed());
             else {
+                String passwordfromSecret = SecretFetcher.getPasswordfromSecret();
                 return DriverManager.getConnection(
                         "jdbc:postgresql://pg-2737f92c-vivavolunteers.b.aivencloud.com:26951/defaultdb?sslmode=require",
-                        "avnadmin", SecretFetcher.getPasswordfromSecret()
+                        "avnadmin", passwordfromSecret
                   );
             }
         }

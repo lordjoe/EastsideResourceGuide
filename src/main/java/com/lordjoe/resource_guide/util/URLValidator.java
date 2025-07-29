@@ -12,6 +12,8 @@ public class URLValidator {
         try {
             if (urlString.equalsIgnoreCase("https://app.leg.wa.gov/districtfinder"))
                 System.out.println(urlString);
+            if(!urlString.startsWith("http://") && !urlString.startsWith("https://"))
+                urlString = "https://" + urlString;
 
             URL url = new URL(urlString);
             HttpURLConnection huc = (HttpURLConnection) url.openConnection();

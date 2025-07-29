@@ -10,6 +10,7 @@ public class MapsKeyFetcher {
      }
 
     public static void main(String[] args) {
+
         System.out.println(getMapsApiKey());
     }
 }

@@ -7,7 +7,7 @@ import java.io.File;
 
 public class MainApp {
 
-    public static void main(String[] args) {
+    public static void main(String[] args)  throws Exception {
         if (args.length == 0) {
             System.err.println("Usage: MainApp <path_to_docx>");
             return;
@@ -41,7 +41,7 @@ public class MainApp {
                 }
             }
               System.out.println("Document parsed and inserted successfully.");
-          //  Database.validateAllURLs();
+              Database.validateAllURLs();
 
         } catch (Exception e) {
             e.printStackTrace();

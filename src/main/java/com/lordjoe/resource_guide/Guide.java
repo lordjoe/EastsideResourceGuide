@@ -24,7 +24,7 @@ public class Guide {
     private final Map<Integer, GuideItem> idToCatagory = new HashMap<>();
     private final Map<String, GuideItem> nameToCatagory = new HashMap<>();
     private final Map<Integer, Resource> idToResource = new HashMap<>();
-    private final Map<Integer, Resource> idToBlock= new HashMap<>();
+    private final Map<Integer, Resource> idToBlock = new HashMap<>();
     private final List<Catagory> catagories = new ArrayList<>();
 
     private boolean loaded = false;
@@ -46,7 +46,31 @@ public class Guide {
         guaranteeLoaded();
         return catagories;
     }
-    public List< Resource> getCommunityResources() {
+
+    public List<Catagory> getSubCatagories() {
+       List<Catagory> ret = new ArrayList<>();
+        for (Catagory catagory : getCatagories()) {
+            List<SubCatagory> subCatagories = catagory.getSubCatagories();
+            ret.addAll(subCatagories);
+        }
+        return ret;
+    }
+
+    public Catagory getUnClassified() {
+        for (Catagory catagory : getCatagories()) {
+            if(catagory.getName().equalsIgnoreCase("unclassified"))
+                return catagory;
+        }
+        return null;
+    }
+
+    public List<Catagory> getClassified() {
+        List<Catagory> ret = new ArrayList<>(getCatagories());
+        ret.remove(getUnClassified());
+        return ret;
+    }
+
+    public List<Resource> getCommunityResources() {
         guaranteeLoaded();
         return new ArrayList<>(idToResource.values());
     }
@@ -94,8 +118,8 @@ public class Guide {
                     int id = cr.getId();
                     List<ResourceDescription> descriptions1 = descriptions.get(id);
                     String description = mergeDescriptions(descriptions1);
-                      cat.setDescription(description);
-                      List<ResourceDescription> blocks = blockd.get(id);
+                    cat.setDescription(description);
+                    List<ResourceDescription> blocks = blockd.get(id);
                     addBlocks(blocks, cat);
                     catagories.add(cat);
                     idToCatagory.put(id, cat);
@@ -138,7 +162,7 @@ public class Guide {
                 res.setDescription(description);
                 List<ResourceDescription> blocks = blockd.get(id1);
                 addBlocks(blocks, res);
-           
+
                 ResourceSite site = sites.get(cr.getId());
                 if (site != null) {
                     res.setAddress(site.getAddress());
@@ -176,24 +200,24 @@ public class Guide {
     }
 
     private Map<Integer, List<ResourceDescription>> mapBlockResources(Map<Integer, List<ResourceDescription>> descriptions) {
-        if(descriptions == null)
+        if (descriptions == null)
             return null;
 
         Map<Integer, List<ResourceDescription>> idToBlocks = new HashMap<>();
         for (Integer i : descriptions.keySet()) {
             List<ResourceDescription> list = descriptions.get(i);
-            if(list == null)
+            if (list == null)
                 continue;
             List<ResourceDescription> remove = new ArrayList<>();
-             for (ResourceDescription resourceDescription : list) {
-                if(resourceDescription.isBlock())   {
+            for (ResourceDescription resourceDescription : list) {
+                if (resourceDescription.isBlock()) {
                     remove.add(resourceDescription);
                 }
             }
-             if(!remove.isEmpty()) {
-                 list.removeAll(remove);
-                 idToBlocks.put(i, remove);
-             }
+            if (!remove.isEmpty()) {
+                list.removeAll(remove);
+                idToBlocks.put(i, remove);
+            }
         }
         return idToBlocks;
     }
@@ -202,7 +226,7 @@ public class Guide {
         if (descriptions1 != null && !descriptions1.isEmpty()) {
             for (ResourceDescription resourceDescription : descriptions1) {
                 if (resourceDescription.isBlock()) {
-                    Resource resx = new Resource(resourceDescription.getResourceId(),   parent);
+                    Resource resx = new Resource(resourceDescription.getResourceId(), parent);
                     resx.setDescription(resourceDescription.getDescription());
 
                     parent.addBlock(resx);
@@ -228,6 +252,20 @@ public class Guide {
         return sb.toString().trim();
     }
 
+
+    private void validateURLs() {
+        for (Resource value : idToResource.values()) {
+            String website = value.getWebsite();
+            if (website != null) {
+                boolean valid = com.lordjoe.resource_guide.util.URLValidator.isValidURL(website);
+                if (!valid)
+                    System.out.println(website);
+
+            }
+        }
+    }
+
+
     public static void main(String[] args) throws Exception {
         if (args.length > 0) {
             if (args[0].equals("remote")) {
@@ -235,8 +273,10 @@ public class Guide {
             }
         }
         Guide.Instance.guaranteeLoaded();
+        Guide.Instance.validateURLs();
         for (Catagory catagory : Guide.Instance.catagories) {
             System.out.println(catagory.getName());
         }
     }
+
 }
