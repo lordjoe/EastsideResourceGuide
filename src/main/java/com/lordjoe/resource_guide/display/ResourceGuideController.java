@@ -128,7 +128,7 @@ public class ResourceGuideController {
         return String.format("#%02x%02x%02x", color.getRed(), color.getGreen(), color.getBlue());
     }
 
-    private String escapeHtml(String input) {
+    public static String escapeHtml(String input) {
         if (input == null) return "";
         return input.replace("&", "&amp;").replace("<", "&lt;").replace(">", "&gt;");
     }
@@ -139,7 +139,9 @@ public class ResourceGuideController {
         Guide guide = Guide.Instance;
         Catagory cat = guide.getCatagoryByName(categoryName);
         if (cat == null) {
-            return "<html><body><h1>Category not found</h1><a href='/'>Back to Home</a></body></html>";
+            cat = guide.getCatagoryById(Integer.valueOf(categoryName));
+            if(cat == null)
+                return "<html><body><h1>Category not found</h1><a href='/'>Back to Home</a></body></html>";
         }
         return CategoryPageGenerator.generateCategoryPage(cat);
     }

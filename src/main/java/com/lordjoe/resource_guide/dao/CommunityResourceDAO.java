@@ -12,6 +12,7 @@ import java.util.Map;
 public class CommunityResourceDAO {
 
     public static int insert(CommunityResource resource) throws SQLException {
+        int ret = 0;
         if(resource.getId() != 0) {
             return resource.getId();
         }
@@ -29,8 +30,17 @@ public class CommunityResourceDAO {
             ResultSet rs = stmt.executeQuery();
             if (rs.next()) {
                 DatabaseConnection.clearConnection();
-                return rs.getInt("id");
-            }
+                ret = rs.getInt("id");
+                String description = resource.getDescription();
+                if(description != null && description.length() > 0) {
+                    String descSql = "UPDATE resource_descriptions SET content = ? WHERE resource_id = ? AND is_block = FALSE";
+                        try( PreparedStatement stmt2 = conn.prepareStatement(descSql)) {
+                        stmt.setString(1, description);
+                        stmt.setInt(2, ret);
+                        stmt.executeUpdate();
+                    }
+                }
+             }
             throw new SQLException("Insert failed, no ID obtained.");
             // keep connection  open
           }
@@ -46,8 +56,8 @@ public class CommunityResourceDAO {
                 stmt.executeUpdate();
             }
 
-            String siteSql = "UPDATE resource_sites SET phone_primary = ?, email = ?, website = ?, " +
-                    "address_line1 = ?, hours = ?, notes = ? WHERE resource_id = ?";
+            String siteSql = "UPDATE resource_sites SET phone  = ?, email = ?, website = ?, " +
+                    "address  = ?, hours = ?, notes = ? WHERE resource_id = ?";
             try (Connection conn = DatabaseConnection.getConnection();
                  PreparedStatement stmt = conn.prepareStatement(siteSql)) {
                 stmt.setString(1, resource.getPhone());

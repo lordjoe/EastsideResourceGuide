@@ -1,6 +1,7 @@
 package com.lordjoe.resource_guide;
 
 import com.lordjoe.resource_guide.dao.ResourceType;
+import com.lordjoe.resource_guide.model.CommunityResource;
 
 import java.util.*;
 
@@ -37,6 +38,12 @@ public class Catagory extends GuideItem {
     public void addSubCatagory(SubCatagory subcat) {
 
         addChild(subcat);
+    }
+
+    public void addResource(CommunityResource ress) {
+        Resource r = new Resource(ress.getId(),ress.getName(),this);
+        r.populateFrom(ress);
+
     }
 
     public List<SubCatagory> getSubCatagories() {

@@ -60,7 +60,7 @@ public class CommunityResource {
 
     public CommunityResource(Resource r) {
         id = r.getId();
-        type = ResourceType.Resource;
+         type = ResourceType.Resource;
         name = r.getName();
         parentId = getParentId();
         phone = r.getPhone();

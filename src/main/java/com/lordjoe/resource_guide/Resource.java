@@ -72,6 +72,14 @@ public class Resource extends GuideItem {
         parent.addChild(this);
     }
 
+
+    public Resource(CommunityResource r,   GuideItem parent) {
+        super(r.getId(), r.getName(), ResourceType.Resource, r.getParentId());
+        this.id = r.getId();
+        this.parent = parent;
+        populateFrom(r);
+    }
+
     public void populateFrom(CommunityResource r) {
         description = r.getDescription();
         address = r.getAddress();

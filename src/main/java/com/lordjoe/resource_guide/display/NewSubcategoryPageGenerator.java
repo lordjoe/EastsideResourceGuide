@@ -43,6 +43,7 @@ public class NewSubcategoryPageGenerator {
         html.append("<input type='hidden' name='parentId' value='").append(parentId).append("'>");
         html.append("<label for='name'>Subcategory Name:</label>");
         html.append("<input type='text' id='name' name='name' oninput='validateName()' required>");
+        html.append("<textarea id=\"description\" name=\"description\" rows=\"4\" cols=\"50\"></textarea><br><br>");
         html.append("<div class='buttons'>");
         html.append("<button type='submit' class='save-btn' id='save-btn' disabled>Save</button>");
         html.append("<button type='button' class='cancel-btn' onclick='history.back()'>Cancel</button>");

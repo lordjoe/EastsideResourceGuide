@@ -15,7 +15,7 @@ public class GuideItem implements Comparable<GuideItem> {
     private final String name;
     private String description;  // Optional
     final private ResourceType type;
-    private final Integer parentId;
+    private   Integer parentId;
     private boolean block;       // true if this description is a formatted block
     private final List<Resource> blocks = new ArrayList<>();
     private final Map<String, GuideItem> NameToResource = new HashMap<>();
@@ -39,6 +39,10 @@ public class GuideItem implements Comparable<GuideItem> {
         return parentId;
     }
 
+    public void setParentId(Integer id) {
+        parentId  = id;
+    }
+
     public GuideItem(int id, String name, ResourceType type, Integer parentId) {
         this.id = id;
         this.name = name;
@@ -46,8 +50,13 @@ public class GuideItem implements Comparable<GuideItem> {
         this.parentId = parentId;
     }
 
+    public void dropChild(GuideItem resource) {
+        String name = resource.getName();
+        NameToResource.remove(name);
+    }
     public void addChild(GuideItem resource) {
         String name = resource.getName();
+        resource.setParentId(id);
         if(name.equals(getName())) {
             System.out.println("Duplicate name: " + name);
         }

@@ -14,6 +14,8 @@ import org.springframework.boot.autoconfigure.jdbc.DataSourceAutoConfiguration;
         exclude = { DataSourceAutoConfiguration.class }
 )
 public class LocalResourceGuidsApplication {
+
+    public static boolean DEBUG_ADMIN_MODE = true;
     public static void main(String[] args) {
         SpringApplication.run(LocalResourceGuidsApplication.class, args);
     }

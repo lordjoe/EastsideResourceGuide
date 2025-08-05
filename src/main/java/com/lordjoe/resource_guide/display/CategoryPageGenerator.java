@@ -1,9 +1,8 @@
 package com.lordjoe.resource_guide.display;
 
-import com.lordjoe.resource_guide.Catagory;
-import com.lordjoe.resource_guide.Resource;
-import com.lordjoe.resource_guide.SubCatagory;
+import com.lordjoe.resource_guide.*;
 import com.lordjoe.resource_guide.dao.ResourceType;
+import com.lordjoe.resource_guide.util.URLValidator;
 import org.springframework.security.core.Authentication;
 import org.springframework.security.core.context.SecurityContextHolder;
 
@@ -18,6 +17,8 @@ public class CategoryPageGenerator {
 
         Authentication auth = SecurityContextHolder.getContext().getAuthentication();
         boolean isAuthenticated = auth != null && auth.isAuthenticated() && !"anonymousUser".equals(auth.getPrincipal());
+        if(LocalResourceGuidsApplication.DEBUG_ADMIN_MODE)
+            isAuthenticated = true;
 
         StringBuilder html = new StringBuilder();
         html.append("<html><head>");
@@ -50,7 +51,7 @@ public class CategoryPageGenerator {
             html.append("<input type=\"hidden\" name=\"parentId\" value=\"").append(category.getId()).append("\" />");
             html.append("<button type=\"submit\" class=\"button\" style=\"background-color: #4caf50;\">New Resource</button>");
             html.append("</form>");
-            html.append("<form action=\"/new-subcategory\" method=\"get\" style=\"margin-bottom: 20px;\">");
+            html.append("<form action=\"/create-subcategory\" method=\"get\" style=\"margin-bottom: 20px;\">");
             html.append("<input type=\"hidden\" name=\"parentId\" value=\"").append(category.getId()).append("\" />");
             html.append("<button class=\"button\" type=\"submit\">Add New Subcategory</button>");
             html.append("</form></div>");
@@ -90,6 +91,15 @@ public class CategoryPageGenerator {
                 html.append("<input type=\"hidden\" name=\"id\" value=\"0\" />");
                 html.append("<input type=\"hidden\" name=\"parentId\" value=\"").append(sub.getId()).append("\" />");
                 html.append("<button type=\"submit\" class=\"button\" style=\"background-color: #4caf50;\">New Resource</button>");
+                html.append("</form>");
+
+                List<Resource> resources = sub.getResources();
+
+                boolean canDelete = resources.isEmpty();
+                html.append("<form method='POST' action='/deleteSubcategory'>");
+                html.append("<input type='hidden' name='subcategoryId' value='" + sub.getId() + "'/>");
+                html.append("<button type='submit' " + (canDelete ? "" : "disabled") + ">Delete Subcategory</button>");
+                html.append("</form>");
                 html.append("</form></div>");
             }
             html.append("</div>");
@@ -118,6 +128,7 @@ public class CategoryPageGenerator {
         if (r.getType() == ResourceType.Block)
             return;
 
+        Guide guide = Guide.Instance;
         html.append("<div class=\"grid-item\">\n<h2>").append(escapeHtml(r.getName())).append("</h2>");
 
         if (r.getDescription() != null) html.append("<p>").append(escapeHtml(r.getDescription())).append("</p>");
@@ -127,10 +138,31 @@ public class CategoryPageGenerator {
         if (r.getWebsite() != null) {
             String[] urls = r.getWebsite().split(",");
             for (String url : urls) {
-                html.append("<p><strong>Website:</strong> <a href='")
-                        .append(escapeHtml(url.trim())).append("' target='_blank' rel='noopener noreferrer'>")
-                        .append(escapeHtml(url.trim())).append("</a></p>");
-            }
+                url = url.replace ("http://", "https://");
+                if(!url.startsWith("https://")  )
+                    url = "https://" + url;
+                url = url.replace (" ", "%20");
+                boolean valid = URLValidator.isValidURL(url);
+
+                 if (valid) {
+                     html.append("<p><strong>Website:</strong> ");
+                     html.append("<a href='")
+                            .append(escapeHtml(url))
+                            .append("' target='_blank' rel='noopener noreferrer'>")
+                            .append(escapeHtml(url))
+                            .append("</a>");
+                } else {
+                     valid = URLValidator.isValidURL(url,true,false);  // repeat to debug
+                    html.append("<span style='color:red;'>")
+                            .append("<p><strong>Website:</strong> ")
+                             .append("<a href='")
+                            .append(escapeHtml(url))
+                            .append("' target='_blank' rel='noopener noreferrer'>")
+                            .append(escapeHtml(url))
+                            .append("</a>")
+                            .append(" (invalid)</span>");
+                }
+           }
         }
         if (r.getAddress() != null) {
             html.append("<p><strong>Address:</strong> ").append(escapeHtml(r.getAddress())).append("</p>");
@@ -139,6 +171,7 @@ public class CategoryPageGenerator {
         if (isAuthenticated) {
             html.append("<form method='get' action='/edit-resource'>")
                     .append("<input type='hidden' name='id' value='").append(r.getId()).append("'/>")
+                    .append("<input type='hidden' name='parentId' value='").append(r.getParentId()).append("'/>")
                     .append("<button type='submit' style='margin-top:10px;'>Edit</button>")
                     .append("</form>");
         }
