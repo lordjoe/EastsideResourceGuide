@@ -1,5 +1,6 @@
 package com.lordjoe.resource_guide;
 
+import com.lordjoe.resource_guide.model.CommunityResource;
 import com.lordjoe.resource_guide.util.SecretFetcher;
 import com.lordjoe.resource_guide.util.URLValidator;
 
@@ -22,11 +23,11 @@ import java.util.List;
              Guide guide = Guide.Instance;
             guide.guaranteeLoaded();
 
-            List<Resource> catagories = guide.getCommunityResources();
+            List<CommunityResource> catagories = guide.getCommunityResources();
             List<String> websites = new ArrayList<String>();
             List<String> goodsites = new ArrayList<String>();
             List<String> badsites = new ArrayList<String>();
-            for (Resource catagory : catagories) {
+            for (CommunityResource catagory : catagories) {
                 if(catagory.getWebsite() != null)
                     websites.add(catagory.getWebsite());
             }

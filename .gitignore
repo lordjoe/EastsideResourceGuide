@@ -4,3 +4,11 @@ data/
 .idea/
 WordDocs/
 /WordDocs/
+/.env
+/src/main/resources/firebase-secret.json
+/AivenCACert.pem
+/backup_aiven.dump
+/backup_aiven.sh
+/backup_local.dump
+/python/embedding_server.py
+/Users.csv

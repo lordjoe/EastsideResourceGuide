@@ -153,14 +153,14 @@ public class CategoryPageGenerator {
                             .append("</a>");
                 } else {
                      valid = URLValidator.isValidURL(url,true,false);  // repeat to debug
-                    html.append("<span style='color:red;'>")
-                            .append("<p><strong>Website:</strong> ")
+                     html.append("<p><strong>Website:</strong> ")
+                             .append("<span style='color:red;'>")
                              .append("<a href='")
-                            .append(escapeHtml(url))
-                            .append("' target='_blank' rel='noopener noreferrer'>")
-                            .append(escapeHtml(url))
-                            .append("</a>")
-                            .append(" (invalid)</span>");
+                             .append(escapeHtml(url))
+                             .append("' target='_blank' rel='noopener noreferrer'>")
+                             .append(escapeHtml(url))
+                             .append("</a> (invalid)")
+                             .append("</span></p>");
                 }
            }
         }
@@ -179,9 +179,10 @@ public class CategoryPageGenerator {
         html.append("</div>");
     }
 
-    private static String escapeHtml(String input) {
+    public static String escapeHtml(String input) {
         if (input == null) return "";
-        return input.replace("&", "&amp;").replace("<", "&lt;").replace(">", "&gt;");
+        return input.replace("&", "&amp;").replace("<", "&lt;").
+                replace(">", "&gt;");
     }
 
     private static String colorToHex(Color color) {

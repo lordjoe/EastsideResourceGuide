@@ -1,0 +1,1 @@
+pg_dump -U steve -h localhost -p 5432 -F c -f viva_backup.dump viva

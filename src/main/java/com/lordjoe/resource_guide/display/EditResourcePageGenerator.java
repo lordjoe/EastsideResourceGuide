@@ -1,11 +1,13 @@
 package com.lordjoe.resource_guide.display;
 
-import com.lordjoe.resource_guide.model.CommunityResource;
+import com.lordjoe.resource_guide.Resource;
 import com.lordjoe.resource_guide.util.URLValidator;
+
+import static com.lordjoe.resource_guide.display.CategoryPageGenerator.escapeHtml;
 
 public class EditResourcePageGenerator {
 
-    public static String generateEditPage(CommunityResource resource) {
+    public static String generateEditPage(Resource resource) {
         boolean isNew = resource.getId() == 0;
 
         StringBuilder html = new StringBuilder();
@@ -61,7 +63,7 @@ public class EditResourcePageGenerator {
         html.append("  <form method=\"post\" action=\"/update-resource\">\n");
 
         html.append("    <input type=\"hidden\" name=\"id\" value=\"").append(resource.getId()).append("\" />\n");
-        Object obj = resource.getParentId() != null ? resource.getParentId() : "";
+        Object obj = resource.getParentId() ;
         html.append("    <input type=\"hidden\" name=\"parentId\" value=\"").append(obj).append("\" />\n");
 
         html.append("    <label for=\"name\">Name:</label>\n");
@@ -82,8 +84,19 @@ public class EditResourcePageGenerator {
         if (valid) {
             html.append("    <input type=\"text\" name=\"website\" value=\"").append(escape(website)).append("\" />\n");
         } else {
-            html.append("<span style='color:red;'>Invalid URL</span><br/>\n");
+                   String ws = escape(website).replace("http://","https://");
+                   if(!ws.startsWith("https://"))
+                       ws = "https://"+ws;
+                    html.append("<span style='color:red;'>")
+                    .append("<a href='")
+                    .append(escapeHtml(ws))
+                    .append("' target='_blank' rel='noopener noreferrer'>")
+                    .append(escapeHtml(ws))
+                    .append("</a> (invalid)")
+                    .append("</span></p>");
+                    html.append("<span style='color:red;'>Invalid URL</span><br/>\n");
             html.append("    <input type=\"text\" name=\"website\" value=\"").append(escape(website)).append("\" />\n");
+            html.append("</span.");
         }
 
         html.append("    <label for=\"address\">Address:</label>\n");

@@ -23,6 +23,7 @@ public class Database {
             stmt.executeUpdate("DROP TABLE IF EXISTS resource_sites CASCADE");
             stmt.executeUpdate("DROP TABLE IF EXISTS resource_descriptions CASCADE");
             stmt.executeUpdate("DROP TABLE IF EXISTS community_resources CASCADE");
+            stmt.executeUpdate("DROP TABLE IF EXISTS users CASCADE");
 
 
             System.out.println("Tables dropped.");
@@ -72,12 +73,12 @@ public class Database {
         """);
 
             stmt.executeUpdate("""
-            CREATE TABLE IF NOT EXISTS users (
-                id SERIAL PRIMARY KEY,
-                username TEXT UNIQUE NOT NULL,
-                password TEXT NOT NULL,
-                role TEXT NOT NULL DEFAULT 'USER'
-            )
+           CREATE TABLE  IF NOT EXISTS users (
+             email TEXT PRIMARY KEY,
+             password TEXT NOT NULL,
+             first_name TEXT,
+             last_name TEXT
+         ) 
         """);
 
             System.out.println("Tables created if they did not already exist.");

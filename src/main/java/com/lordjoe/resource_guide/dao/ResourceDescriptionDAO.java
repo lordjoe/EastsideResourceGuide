@@ -15,22 +15,29 @@ import java.util.Map;
 
 public class ResourceDescriptionDAO {
 
-    public static void insert(ResourceDescription description) throws SQLException {
+    public static int insert(ResourceDescription description) throws SQLException {
 //        if(description.isBlock()) {
 //            System.out.println("Inserting Block\n " + description.getDescription());
  //       }
-        String sql = "INSERT INTO resource_descriptions (resource_id, content, is_block) VALUES (?, ?, ?)";
+        int ret = 0;
+        if(description.getResourceId() != 0) {
+            return description.getResourceId();
+        }
+        String sql = "INSERT INTO resource_descriptions (  content, is_block) VALUES (?, ?, ?) RETURNING resource_id ";
         try (Connection conn = DatabaseConnection.getConnection();
 
              PreparedStatement stmt = conn.prepareStatement(sql)) {
 
-            stmt.setInt(1, description.getResourceId());
-            stmt.setString(2, description.getDescription());
-            stmt.setBoolean(3, description.isBlock());
+             stmt.setString(1, description.getDescription());
+            stmt.setBoolean(2, description.isBlock());
 
-            stmt.executeUpdate();
-            DatabaseConnection.clearConnection();
-            return;
+            ResultSet rs = stmt.executeQuery();
+            if (rs.next()) {
+                DatabaseConnection.clearConnection();
+                ret = rs.getInt("id");
+                 return ret;
+            }
+            throw new UnsupportedOperationException("Fix This"); // ToDo
         } catch (SQLException e) {
             throw new RuntimeException(e);
 
@@ -47,9 +54,8 @@ public static Map<Integer, List<CommunityResource>> loadAllAsMap() throws SQLExc
          ResultSet rs = stmt.executeQuery()) {
 
         while (rs.next()) {
-            CommunityResource resource = new CommunityResource();
-            resource.setId(rs.getInt("id"));
-            resource.setName(rs.getString("name"));
+            CommunityResource resource = CommunityResource.getInstance(rs.getInt("id"));
+             resource.setName(rs.getString("name"));
             resource.setType(ResourceType.valueOf(rs.getString("type")));
             resource.setParentId(rs.getObject("parent_id") != null ? rs.getInt("parent_id") : null);
 

@@ -60,10 +60,9 @@ public class WordDocParserUnclassified {
     public static void processResourceLines(List<String> lines) throws Exception {
         if (lines.isEmpty()) return;
 
-        CommunityResource resource = new CommunityResource();
-        resource.setName(lines.get(0).trim());
-        resource.setType(ResourceType.Resource);
-        resource.setParentId(CategoryUtils.getUnclassifiedId());
+
+
+        CommunityResource resource = CommunityResourceDAO.create(0,lines.get(0).trim(),ResourceType.Resource,CategoryUtils.getUnclassifiedId(),null);
 
         String currentField = null;
         StringBuilder buffer = new StringBuilder();
@@ -135,11 +134,10 @@ public class WordDocParserUnclassified {
 
 
     private static void storeResource(CommunityResource resource ) throws Exception {
-        int id = CommunityResourceDAO.insert(resource);
-        resource.setId(id);
-        String description = resource.getDescription();
+        CommunityResourceDAO.update(resource);
+         String description = resource.getDescription();
         if (description != null && !description.isEmpty()) {
-            ResourceDescription desc = new ResourceDescription(id, description, false);
+            ResourceDescription desc = new ResourceDescription(resource.getId(), description, false);
             ResourceDescriptionDAO.insert(desc);
 
         }

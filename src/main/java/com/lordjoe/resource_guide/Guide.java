@@ -1,24 +1,24 @@
 package com.lordjoe.resource_guide;
 
-import com.lordjoe.resource_guide.dao.*;
+import com.lordjoe.resource_guide.dao.CommunityResourceDAO;
+import com.lordjoe.resource_guide.dao.ResourceDescriptionDAO;
+import com.lordjoe.resource_guide.dao.ResourceSiteDAO;
+import com.lordjoe.resource_guide.dao.ResourceType;
+import com.lordjoe.resource_guide.model.AppUser;
 import com.lordjoe.resource_guide.model.CommunityResource;
 import com.lordjoe.resource_guide.model.ResourceDescription;
 import com.lordjoe.resource_guide.model.ResourceSite;
-import com.lordjoe.resource_guide.security.GuideUser;
 import com.lordjoe.resource_guide.util.DatabaseConnection;
 import com.lordjoe.resource_guide.util.URLValidator;
-import com.lordjoe.utilities.Encrypt;
 
-import java.sql.Connection;
-import java.sql.ResultSet;
 import java.sql.SQLException;
-import java.sql.Statement;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
 import static com.lordjoe.resource_guide.Database.createDatabase;
+import static com.lordjoe.resource_guide.model.AppUser.LoadUsers;
 
 /**
  * Loads the complete guide structure from the database into memory.
@@ -28,10 +28,9 @@ public class Guide {
 
     private final Map<Integer, GuideItem> idToCatagory = new HashMap<>();
     private final Map<String, GuideItem> nameToCatagory = new HashMap<>();
-    private final Map<Integer, Resource> idToResource = new HashMap<>();
-    private final Map<Integer, Resource> idToBlock = new HashMap<>();
+     private final Map<Integer, Resource> idToBlock = new HashMap<>();
     private final List<Catagory> catagories = new ArrayList<>();
-    private final Map<String, GuideUser> userMap = new HashMap<>();
+    private final Map<String, AppUser> userMap = new HashMap<>();
 
     private boolean loaded = false;
 
@@ -48,14 +47,17 @@ public class Guide {
         }
     }
 
+    public AppUser getUser(String email) {
+        return userMap.get(email);
+    }
+
     public void reload() {
         if ( loaded) {
            loaded = false;
             idToCatagory.clear();
             userMap.clear();
             idToBlock.clear();
-            idToResource.clear();
-            nameToCatagory.clear();
+             nameToCatagory.clear();
          }
         guaranteeLoaded();
     }
@@ -89,15 +91,15 @@ public class Guide {
         return ret;
     }
 
-    public List<Resource> getCommunityResources() {
+    public List<CommunityResource> getCommunityResources() {
         guaranteeLoaded();
-        return new ArrayList<>(idToResource.values());
+        return CommunityResource.getCommunityResources();
     }
 
-    public CommunityResource getResourceById(int id) {
+    public Resource getInstance(int id )  {
         guaranteeLoaded();
-        Resource r = idToResource.get(id);
-        return new CommunityResource(r);
+        return  Resource.getInstance(id);
+
     }
 
     public Catagory getCatagoryByName(String name) {
@@ -108,23 +110,20 @@ public class Guide {
     }
 
     public void addResource(CommunityResource r) {
-        idToResource.remove(r.getId());
 
         Integer parentId = r.getParentId();
         Catagory catagoryById = getCatagoryById(parentId);
-        Resource rx = new Resource(r, catagoryById);
-         idToResource.put(r.getId(), rx);
-         GuideItem guideItem = idToCatagory.get(r.getParentId());
-         if (guideItem == null) {
-             guideItem.addChild(rx);
+        Resource rx = Resource.getInstance(r, catagoryById);
+          if (catagoryById != null) {
+               catagoryById.addChild(rx);
          }
     }
 
 
     public void removeResource(CommunityResource r) {
-        idToResource.remove(r.getId());
+
          GuideItem guideItem = idToCatagory.get(r.getParentId());
-        Resource rx = new Resource(r,guideItem);
+        Resource rx = Resource.getInstance(r,guideItem);
         if (guideItem == null) {
             guideItem.dropChild(rx);
         }
@@ -151,6 +150,10 @@ public class Guide {
             current = getResourceById(current.getParentId());
         }
         return getCatagoryById(current.getId()); // current should now be the root category
+    }
+
+    public CommunityResource getResourceById(int id) {
+        return CommunityResource.getInstance(id);
     }
 
     private void loadFromDatabase() throws SQLException {
@@ -206,7 +209,7 @@ public class Guide {
                 GuideItem parent = resolveParent(cr.getParentId());
                 if (parent == null) continue;
 
-                Resource res = new Resource(cr.getId(), cr.getName(), parent);
+                Resource res = Resource.getInstance(cr.getId(), cr.getName(), parent);
 
                 int id1 = cr.getId();
                 List<ResourceDescription> descriptions1 = descriptions.get(id1);
@@ -235,19 +238,14 @@ public class Guide {
                 }
 
                 parent.addChild(res);
-                int id = cr.getId();
-                if (idToResource.containsKey(id)) {
-                    Resource resource = idToResource.get(id);
-                    continue;
-                   // throw new UnsupportedOperationException("Fix This"); // ToDo
-                }
-                idToResource.put(id, res);
+
+ ;
             }
             if (type == ResourceType.Block) {
                 GuideItem parent = resolveParent(cr.getParentId());
                 if (parent == null) continue;
 
-                Resource res = new Resource(cr.getId(), cr.getName(), parent);
+                Resource res = Resource.getInstance(cr.getId(), cr.getName(), parent);
 
                 int id = cr.getId();
                 List<ResourceDescription> descriptions1 = descriptions.get(id);
@@ -262,28 +260,18 @@ public class Guide {
         loaded = true;
     }
 
+
+    
     public void loadUsers() {
         userMap.clear();
-        UserDAO.guaranteeUser("admin", Encrypt.encryptString("Sulphur32"));
-        UserDAO.guaranteeUser("lordjoe2000@gmail.com", Encrypt.encryptString("Sulphur32"));
-
-        try (Connection conn = DatabaseConnection.getConnection();
-             Statement stmt = conn.createStatement();
-             ResultSet rs = stmt.executeQuery("SELECT username, password, role FROM users")) {
-
-            while (rs.next()) {
-                String username = rs.getString("username");
-                String encryptedPassword = rs.getString("password");
-                String role = rs.getString("role");
-                GuideUser user = new GuideUser(username, encryptedPassword, role);
-                userMap.put(username, user);
-            }
-         } catch (SQLException e) {
-            throw new RuntimeException("Failed to load users", e);
+        List<AppUser> users = LoadUsers();
+        for (AppUser user : users) {
+             userMap.put(user.getEmail(),user);
         }
+
     }
 
-    public GuideUser getUserByUsername(String username) {
+    public AppUser getUserByUsername(String username) {
         return userMap.get(username);
     }
     
@@ -314,7 +302,7 @@ public class Guide {
         if (descriptions1 != null && !descriptions1.isEmpty()) {
             for (ResourceDescription resourceDescription : descriptions1) {
                 if (resourceDescription.isBlock()) {
-                    Resource resx = new Resource(resourceDescription.getResourceId(), parent);
+                    Resource resx = Resource.getInstance(resourceDescription.getResourceId(), parent);
                     resx.setDescription(resourceDescription.getDescription());
 
                     parent.addBlock(resx);
@@ -327,7 +315,7 @@ public class Guide {
         if (parentId == null) return null;
         if (idToCatagory.containsKey(parentId))
             return idToCatagory.get(parentId);
-        return idToResource.get(parentId);
+        return null;
     }
 
     private String mergeDescriptions(List<ResourceDescription> descriptions) {
@@ -340,7 +328,7 @@ public class Guide {
         return sb.toString().trim();
     }
 
-    private String fixBropenURL(Resource res) {
+    private String fixBropenURL(CommunityResource res) {
         String[] items = res.getWebsite().split(" ");
         res.setWebsite(items[0]);
         if(items.length > 1)  {
@@ -353,7 +341,7 @@ public class Guide {
                    res.setAddress(test.trim());
             }
         }
-        CommunityResource data = new CommunityResource(res);
+        CommunityResource data = CommunityResource.getInstance(res.getId());
         CommunityResourceDAO.update(data);
         return res.getWebsite();
     }
@@ -362,7 +350,7 @@ public class Guide {
         List<String >  badURLS = new ArrayList<>();
         List<String >  goodURLS = new ArrayList<>();
 
-        for (Resource value : idToResource.values()) {
+        for (CommunityResource value : CommunityResource.getCommunityResources()) {
             String website = value.getWebsite();
             if (website != null) {
                 boolean needsCheck = com.lordjoe.resource_guide.util.URLValidator.needsCheck(website);

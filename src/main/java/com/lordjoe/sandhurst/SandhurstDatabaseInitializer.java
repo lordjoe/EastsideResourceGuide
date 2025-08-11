@@ -11,6 +11,8 @@ public class SandhurstDatabaseInitializer {
 
     @PostConstruct
     public void init() throws Exception {
+        if(true)
+             return;
         Database.clearDatabase();
         Database.createDatabase();
         Database.loadHousesFromTSV("kirkland_houses.tsv");

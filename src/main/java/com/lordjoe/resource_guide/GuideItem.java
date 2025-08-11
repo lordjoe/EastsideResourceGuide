@@ -12,7 +12,7 @@ import java.util.Map;
  */
 public class GuideItem implements Comparable<GuideItem> {
     private final int id;
-    private final String name;
+    private   String name;
     private String description;  // Optional
     final private ResourceType type;
     private   Integer parentId;
@@ -103,6 +103,10 @@ public class GuideItem implements Comparable<GuideItem> {
         return blocks;
     }
 
+
+    public void setName(String name) {
+        this.name = name;
+    }
 
     public String getName() {
         return name;

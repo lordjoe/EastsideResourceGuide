@@ -34,8 +34,8 @@ public class NewSubcategoryController {
     public String createSubcategory(@RequestParam("parentId") int parentId,
                                     @RequestParam("name") String name,
                                     @RequestParam("description") String description) throws Exception {
-        CommunityResource subcat = new CommunityResource(name, ResourceType.Subcategory, parentId);
-        int insert = CommunityResourceDAO.insert(subcat);
+        CommunityResource subcat = CommunityResourceDAO.create(0,name, ResourceType.Subcategory, parentId);
+         int insert = CommunityResourceDAO.insert(subcat);
 
         if(description != null && description.length() > 0) {
             ResourceDescription des = new ResourceDescription(insert,  description, false);

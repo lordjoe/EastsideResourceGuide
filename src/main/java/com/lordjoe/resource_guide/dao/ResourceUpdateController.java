@@ -2,6 +2,7 @@ package com.lordjoe.resource_guide.dao;
 
 import com.lordjoe.resource_guide.Catagory;
 import com.lordjoe.resource_guide.Guide;
+import com.lordjoe.resource_guide.Resource;
 import com.lordjoe.resource_guide.model.CommunityResource;
 import jakarta.servlet.http.HttpServletRequest;
 import org.slf4j.Logger;
@@ -37,11 +38,11 @@ public class ResourceUpdateController {
 
         logger.info("Updating resource with id: {}, parentId: {}, name: {}", id, parentId, name);
 
-        CommunityResource resource = Guide.Instance.getResourceById(id);
+        Guide instance = Guide.Instance;
+         Resource resource = Resource.getInstance(id);
 
         if (resource == null) {
-            resource = new CommunityResource();
-            resource.setId(0);
+            throw new UnsupportedOperationException("Fix This"); // ToDo
         }
 
         if (parentId != null) {
@@ -56,24 +57,26 @@ public class ResourceUpdateController {
         resource.setHours(hours);
         resource.setNotes(notes);
 
+        CommunityResource cr = CommunityResource.getInstance(id);
+        cr.update(resource);
         if (id == 0) {
             try {
-                CommunityResourceDAO.insert(resource);
-                Guide.Instance.addResource(resource); // Add new resource to in-memory guide
+                 CommunityResourceDAO.insert(cr);
+                instance.addResource(cr); // Add new resource to in-memory guide
             } catch (Exception e) {
                 logger.error("Failed to insert new resource", e);
                 throw new RuntimeException("Failed to insert new resource", e);
             }
         } else {
-            CommunityResourceDAO.update(resource);
-            Guide.Instance.addResource(resource); // Refresh updated copy
-        }
+            CommunityResourceDAO.update(cr);
+            // Get the existing Resource instance from the cache and update its fields
+           }
 
         Integer redirectId = resource.getParentId();
         if (redirectId == null) {
             return new RedirectView("/main"); // Redirect to a default page if parentId is null
         } else {
-            Catagory cat = Guide.Instance.getCatagoryById(redirectId);
+            Catagory cat = instance.getCatagoryById(redirectId);
             if (cat != null) {
                  cat = cat.getCatagory();
                 return new RedirectView("/category?category=" + URLEncoder.encode(cat.getName(), StandardCharsets.UTF_8));

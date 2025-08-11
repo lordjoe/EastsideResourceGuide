@@ -41,7 +41,7 @@ public class Catagory extends GuideItem {
     }
 
     public void addResource(CommunityResource ress) {
-        Resource r = new Resource(ress.getId(),ress.getName(),this);
+        Resource r = Resource.getInstance(ress.getId(),ress.getName(),this);
         r.populateFrom(ress);
 
     }

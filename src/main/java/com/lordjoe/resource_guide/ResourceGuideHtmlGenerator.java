@@ -1,5 +1,7 @@
 package com.lordjoe.resource_guide;
 
+import com.lordjoe.resource_guide.dao.CommunityResourceDAO;
+import com.lordjoe.resource_guide.dao.ResourceType;
 import com.lordjoe.resource_guide.util.DatabaseConnection;
 import com.lordjoe.resource_guide.model.*;
 import java.io.File;
@@ -73,12 +75,16 @@ public class ResourceGuideHtmlGenerator {
              ResultSet rs = ps.executeQuery()) {
 
             while (rs.next()) {
-                CommunityResource resource = new CommunityResource();
-                resource.setId(rs.getInt("id"));
-                resource.setParentId(rs.getInt("parent_id"));
-                  resource.setName(rs.getString("name"));
-                resource.setDescription(rs.getString("description"));
-                resources.add(resource);
+
+                int id = rs.getInt("id");
+                ResourceType type = ResourceType.Resource.valueOf(rs.getString("type"));
+                String namex = rs.getString("name");
+                Integer parentId = rs.getObject("parent_id") != null ? rs.getInt("parent_id") : null;
+                CommunityResource cr = CommunityResourceDAO.create(id, namex,
+                        type, parentId );;
+
+                cr.setDescription(rs.getString("description"));
+                resources.add(cr);
             }
         }
 
@@ -93,9 +99,8 @@ public class ResourceGuideHtmlGenerator {
             ps.setInt(1, parentId);
             try (ResultSet rs = ps.executeQuery()) {
                 while (rs.next()) {
-                    CommunityResource sub = new CommunityResource();
-                    sub.setId(rs.getInt("id"));
-                    sub.setName(rs.getString("name"));
+                    CommunityResource sub = CommunityResource.getInstance(rs.getInt("id"));
+                     sub.setName(rs.getString("name"));
                     sub.setDescription(rs.getString("description"));
                     subs.add(sub);
                 }

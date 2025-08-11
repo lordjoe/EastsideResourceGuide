@@ -41,9 +41,9 @@ public class BlockHandler {
 
                 html.append("</p>\n");
             }
-
+            if(true) throw new UnsupportedOperationException("Fix This"); // ToDo
             String htmlBlock = html.toString().trim();
-            CommunityResource holder =  new CommunityResource();
+            CommunityResource holder = CommunityResource.getInstance(ownerId);
             holder.setParentId(ownerId);
             holder.setType(ResourceType.Block);
             holder.setName(BLOCK_NAME);

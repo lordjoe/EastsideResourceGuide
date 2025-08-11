@@ -1,6 +1,7 @@
 package com.lordjoe.resource_guide.security;
 
 import com.lordjoe.resource_guide.*;
+import com.lordjoe.resource_guide.model.AppUser;
 import jakarta.servlet.http.Cookie;
 import jakarta.servlet.http.HttpServletRequest;
 import com.lordjoe.resource_guide.LocalResourceGuidsApplication;
@@ -30,7 +31,7 @@ public class Login {
         for (Cookie cookie : request.getCookies()) {
             if ("EASTSIDE_LOGIN_TOKEN".equals(cookie.getName())) {
                 String token = cookie.getValue();
-                GuideUser user = Guide.Instance.getUserByUsername(token);
+                AppUser user = Guide.Instance.getUserByUsername(token);
                 return user != null;
             }
         }
@@ -38,7 +39,7 @@ public class Login {
     }
 
     // Optional: get current user from cookie
-    public static GuideUser getLoggedInUser(HttpServletRequest request) {
+    public static AppUser getLoggedInUser(HttpServletRequest request) {
         if (request.getCookies() == null) return null;
 
         for (Cookie cookie : request.getCookies()) {

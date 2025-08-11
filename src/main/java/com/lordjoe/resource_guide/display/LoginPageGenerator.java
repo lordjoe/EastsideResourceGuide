@@ -7,6 +7,7 @@ public class LoginPageGenerator {
         html.append("<!DOCTYPE html>\n<html>\n<head>\n");
         html.append("<title>Login - Eastside Resource Guide</title>\n");
         html.append("<link rel=\"icon\" type=\"image/x-icon\" href=\"/favicon.ico\">\n");
+
         html.append("<style>\n");
         html.append("body {\n");
         html.append("  background-image: url('/Cover.png');\n");
@@ -25,6 +26,7 @@ public class LoginPageGenerator {
         html.append("  border-radius: 12px;\n");
         html.append("  box-shadow: 0 0 10px rgba(0, 0, 0, 0.3);\n");
         html.append("  text-align: center;\n");
+        html.append("  width: 300px;\n");
         html.append("}\n");
         html.append(".login-box h2 { margin-bottom: 20px; }\n");
         html.append(".login-box input {\n");
@@ -46,7 +48,22 @@ public class LoginPageGenerator {
         html.append("}\n");
         html.append(".error-msg { color: red; margin-bottom: 10px; }\n");
         html.append(".logout-msg { color: green; margin-bottom: 10px; }\n");
-        html.append("</style>\n</head>\n<body>\n");
+        html.append(".forgot-password {\n");
+        html.append("  margin-top: 30px;\n");
+        html.append("  font-size: 14px;\n");
+        html.append("}\n");
+        html.append("</style>\n");
+
+        // JS popup for ?msg=
+        html.append("<script>\n");
+        html.append("window.onload = function() {\n");
+        html.append("  const params = new URLSearchParams(window.location.search);\n");
+        html.append("  const msg = params.get('msg');\n");
+        html.append("  if (msg) alert(decodeURIComponent(msg));\n");
+        html.append("}\n");
+        html.append("</script>\n");
+
+        html.append("</head>\n<body>\n");
 
         html.append("<div class='login-box'>\n");
         html.append("<h2>Login to Eastside Resource Guide</h2>\n");
@@ -58,14 +75,25 @@ public class LoginPageGenerator {
             html.append("<div class='logout-msg'>You have been logged out</div>\n");
         }
 
+        // Login form
         html.append("<form method='post' action='/login'>\n");
-        html.append("  <input type='text' name='username' placeholder='Username' value='admin' required>\n");
-        html.append("  <input type='password' name='password' placeholder='Password' value='Sulphur32' required>\n");
+        html.append("  <input type='text' name='username' autocomplete='username' required>\n");
+        html.append("  <input type='password' name='password' autocomplete='password' required>\n");
         html.append("  <button type='submit'>Login</button>\n");
-        html.append("</form>\n</div>\n");
+        html.append("</form>\n");
 
+        // Forgot password form
+        html.append("<div class='forgot-password'>\n");
+        html.append("  <form method='post' action='/forgot-password'>\n");
+        html.append("    <input type='email' name='email' placeholder='Enter your email' required>\n");
+        html.append("    <button type='submit'>Forgot Password</button>\n");
+        html.append("  </form>\n");
+        html.append("</div>\n");
+
+        html.append("</div>\n");
         html.append("</body>\n</html>");
 
         return html.toString();
     }
+
 }

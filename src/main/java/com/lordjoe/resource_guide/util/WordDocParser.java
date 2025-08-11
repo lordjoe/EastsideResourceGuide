@@ -43,7 +43,7 @@ public class WordDocParser {
             String categoryName = file.getName().replace("_", " ").replace(".docx", "").trim();
             Catagory category = CategoryUtils.CreateCatagory(categoryName);
             int id = category.getId();
-            CommunityResource rs = new CommunityResource(id, categoryName, ResourceType.Category, null);
+              CommunityResource rs = CommunityResourceDAO.create(id, categoryName, ResourceType.Category, null);
             resourceStack.push(rs);
             descriptions.push(new ArrayList<>());
             List<XWPFParagraph> paragraphs = document.getParagraphs();
@@ -54,10 +54,8 @@ public class WordDocParser {
     }
 
     private static CommunityResource  insertResource( String name,ResourceType type, int parendId) throws SQLException {
-        CommunityResource rs = new CommunityResource( name, type, parendId);
-        int idx = CommunityResourceDAO.insert(rs);
-        rs.setId(idx);
-        return rs;
+         CommunityResource rs = CommunityResourceDAO.create(0, name, type, parendId,null);
+       return rs;
     }
 
     private static boolean isStruckThrough(XWPFParagraph para) {
@@ -341,8 +339,8 @@ public class WordDocParser {
                 String join = String.join("\n", addressLines);
                 resource.setAddress(join);
             }
-            int idx = CommunityResourceDAO.insert(resource);
-            resource.setId(idx);
+             CommunityResourceDAO.update(resource);
+            
 
             if (resource.hasSiteInfo()) {
                 ResourceSite rs = new ResourceSite(resource);

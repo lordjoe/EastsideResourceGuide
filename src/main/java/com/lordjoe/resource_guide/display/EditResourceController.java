@@ -1,6 +1,7 @@
 package com.lordjoe.resource_guide.display;
 
-import com.lordjoe.resource_guide.Guide;
+import com.lordjoe.resource_guide.Resource;
+import com.lordjoe.resource_guide.dao.CommunityResourceDAO;
 import com.lordjoe.resource_guide.dao.ResourceType;
 import com.lordjoe.resource_guide.model.CommunityResource;
 import org.springframework.stereotype.Controller;
@@ -17,17 +18,15 @@ public class EditResourceController {
     public String editResourcePage(@RequestParam(value = "id", required = false) Integer id,
                                    @RequestParam(value = "parentId", required = false) Integer parentId,
                                    Model model) throws Exception {
-        CommunityResource resource;
+         Resource resource;
         boolean isNew = (id == null || id == 0);
 
         if (isNew) {
-            resource = new CommunityResource();
-            resource.setId(0);
-            resource.setParentId(parentId);
-            resource.setType(ResourceType.Resource);
+           CommunityResource r  = CommunityResourceDAO.create(id,"",ResourceType.Resource,parentId,null) ;
+            resource =  Resource.getInstance(id) ;
+            resource.populateFrom(r);
         } else {
-            resource = Guide.Instance.getResourceById(id);
-            resource.setParentId(parentId);
+            resource = Resource.getInstance(id) ;
         }
 
         model.addAttribute("resource", resource);

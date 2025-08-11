@@ -2,6 +2,10 @@ package com.lordjoe.resource_guide.model;
 
 public class ResourceDescription {
     private int resourceId;
+
+
+
+    private int parentId;
     private String description;
     private boolean isBlock;
 
@@ -9,6 +13,14 @@ public class ResourceDescription {
         this.resourceId = resourceId;
         this.description = description;
         this.isBlock = isBlock;
+    }
+
+    public int getParentId() {
+        return parentId;
+    }
+
+    public void setParentId(int parentId) {
+        this.parentId = parentId;
     }
 
     public int getResourceId() {

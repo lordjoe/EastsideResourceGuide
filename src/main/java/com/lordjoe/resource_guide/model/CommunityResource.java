@@ -2,12 +2,31 @@ package com.lordjoe.resource_guide.model;
 
 import com.lordjoe.resource_guide.Catagory;
 import com.lordjoe.resource_guide.Resource;
+import com.lordjoe.resource_guide.dao.CommunityResourceDAO;
 import com.lordjoe.resource_guide.dao.ResourceType;
 import com.lordjoe.resource_guide.util.StringUtils;
 
+import java.util.ArrayList;
+import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
+
 public class CommunityResource {
 
-    private int id;
+    private static final Map<Integer,CommunityResource> instances = new HashMap<Integer,CommunityResource>();
+
+    public static List<CommunityResource> getCommunityResources() {
+          return new ArrayList<>(instances.values());
+    }
+    public static CommunityResource getInstance(int id) {
+        return instances.get(id);
+    }
+
+    // Method to allow DAO to put fully loaded instances into the cache
+    public static void putInstance(int id, CommunityResource resource) {
+        instances.put(id, resource);
+    }
+    private final int id;
     private String name;
     private ResourceType type; // "Category", "SubCategory", "Resource", "Block"
     private Integer parentId; // Nullable - null for top-level Categories
@@ -54,11 +73,40 @@ public class CommunityResource {
         this.description = description;
     }
 
-
-    public CommunityResource() {
+    private CommunityResource(int id) {
+        this.id = id;
+        instances.put(id,this);
     }
 
-    public CommunityResource(Resource r) {
+    public CommunityResource reconcile(Resource r) {
+        CommunityResource ret = getInstance(r.getId());
+        if(ret == null) {
+            ret = new CommunityResource(r);
+            instances.put(r.getId(), ret);
+            return ret;
+        }
+        else {
+            ret.update(r);
+            return ret;
+        }
+
+    }
+
+    public void update(Resource r) {
+        type = ResourceType.Resource;
+        name = r.getName();
+        parentId = getParentId();
+        phone = r.getPhone();
+        email = r.getEmail();
+        website = r.getWebsite();
+        address = r.getAddress();
+        hours = r.getHours();
+        notes = r.getNotes();
+        description = r.getDescription();
+
+    }
+
+    private CommunityResource(Resource r) {
         id = r.getId();
          type = ResourceType.Resource;
         name = r.getName();
@@ -120,19 +168,25 @@ public class CommunityResource {
     }
 
 
-    public CommunityResource(int id, String name, ResourceType type, Integer parentId) {
-        this.id = id;
-        this.name = name;
-        this.type = type;
-        this.parentId = parentId;
+    public static CommunityResource getResource(int id, String name, ResourceType type, Integer parentId) {
+       CommunityResource ret = getInstance(id);
+       if (ret == null) {
+           ret = new CommunityResource(id);
+       }
+       ret.setName(name);
+       ret.setType(type);
+       ret.setParentId(parentId);
+       return ret;
     }
 
-    public CommunityResource(String name, ResourceType type, Integer parentId) {
-        this(0, name, type, parentId);
+    private  static  CommunityResource getResource(String name, ResourceType type, Integer parentId) {
+   
+            return CommunityResourceDAO.create(0, name, type, parentId);
+
     }
 
-    public CommunityResource(String name, ResourceType type, Catagory cat) {
-        this(0, name, type, cat.getId());
+    private static CommunityResource getResource(String name, ResourceType type, Catagory cat) {
+        return getResource(0, name, type, cat.getId());
     }
 
     // Getters and Setters
@@ -141,9 +195,7 @@ public class CommunityResource {
         return id;
     }
 
-    public void setId(int id) {
-        this.id = id;
-    }
+
 
     public String getName() {
         return name;
