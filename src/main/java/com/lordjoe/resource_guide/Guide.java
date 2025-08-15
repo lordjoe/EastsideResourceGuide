@@ -12,11 +12,9 @@ import com.lordjoe.resource_guide.util.DatabaseConnection;
 import com.lordjoe.resource_guide.util.URLValidator;
 
 import java.sql.SQLException;
-import java.util.ArrayList;
-import java.util.HashMap;
-import java.util.List;
-import java.util.Map;
+import java.util.*;
 
+import static com.lordjoe.resource_guide.CheckURLValidation.showUnlisted;
 import static com.lordjoe.resource_guide.Database.createDatabase;
 import static com.lordjoe.resource_guide.model.AppUser.LoadUsers;
 
@@ -127,6 +125,7 @@ public class Guide {
         if (guideItem == null) {
             guideItem.dropChild(rx);
         }
+        
     }
 
 
@@ -161,6 +160,9 @@ public class Guide {
         Map<Integer, List<ResourceDescription>> descriptions = ResourceDescriptionDAO.loadGroupedByResourceX();
         Map<Integer, ResourceSite> sites = ResourceSiteDAO.loadAllAsMap();
         Map<Integer, List<ResourceDescription>> blockd = mapBlockResources(descriptions);
+
+        Set<String>  testedGoodUlrs = new HashSet<>();
+        Set<String> testedBadUlrs = new HashSet<>();
 
         createDatabase(); // make sure tablews exist
         // First pass: categories and subcategories
@@ -233,7 +235,12 @@ public class Guide {
                    boolean valid = URLValidator.isValidURL(url);
                    if(!valid && !CheckURLValidation.KnownBadURLS.contains(url) ) {
                        valid = URLValidator.isValidURL(url);
-                       System.out.println("\"" + url + "\",");
+       //                System.out.println("\"" + url + "\",");
+                       testedBadUlrs.add(url);
+
+                   }
+                   else {
+                      testedGoodUlrs.add(url);
                    }
                 }
 
@@ -257,6 +264,7 @@ public class Guide {
             }
         }
         loadUsers();
+        showUnlisted(testedGoodUlrs,testedBadUlrs) ;
         loaded = true;
     }
 

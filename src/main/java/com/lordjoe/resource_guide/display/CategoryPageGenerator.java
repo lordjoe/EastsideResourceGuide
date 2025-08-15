@@ -142,7 +142,9 @@ public class CategoryPageGenerator {
                 if(!url.startsWith("https://")  )
                     url = "https://" + url;
                 url = url.replace (" ", "%20");
-                boolean valid = URLValidator.isValidURL(url);
+                boolean valid = true;
+                if(isAuthenticated)
+                    valid = URLValidator.isValidURL(url);
 
                  if (valid) {
                      html.append("<p><strong>Website:</strong> ");
@@ -169,12 +171,23 @@ public class CategoryPageGenerator {
         }
 
         if (isAuthenticated) {
-            html.append("<form method='get' action='/edit-resource'>")
+            html.append("<div style='display:flex; gap:10px; margin-top:10px;'>");
+
+            html.append("<form method='get' action='/edit-resource' style='margin:0;'>")
                     .append("<input type='hidden' name='id' value='").append(r.getId()).append("'/>")
                     .append("<input type='hidden' name='parentId' value='").append(r.getParentId()).append("'/>")
-                    .append("<button type='submit' style='margin-top:10px;'>Edit</button>")
+                    .append("<button type='submit'>Edit</button>")
                     .append("</form>");
+
+            html.append("<form method='post' action='/delete-resource' style='margin:0;'>")
+                    .append("<input type='hidden' name='id' value='").append(r.getId()).append("'/>")
+                    .append("<input type='hidden' name='parentId' value='").append(r.getParentId()).append("'/>")
+                    .append("<button type='submit'>Delete</button>")
+                    .append("</form>");
+
+            html.append("</div>");
         }
+
 
         html.append("</div>");
     }

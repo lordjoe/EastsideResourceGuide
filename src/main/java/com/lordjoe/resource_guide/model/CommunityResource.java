@@ -1,6 +1,7 @@
 package com.lordjoe.resource_guide.model;
 
 import com.lordjoe.resource_guide.Catagory;
+import com.lordjoe.resource_guide.Guide;
 import com.lordjoe.resource_guide.Resource;
 import com.lordjoe.resource_guide.dao.CommunityResourceDAO;
 import com.lordjoe.resource_guide.dao.ResourceType;
@@ -14,6 +15,26 @@ import java.util.Map;
 public class CommunityResource {
 
     private static final Map<Integer,CommunityResource> instances = new HashMap<Integer,CommunityResource>();
+
+    public static void dropInstance(CommunityResource dropped)
+    {
+        int id1 = dropped.getId();
+        Integer parentId1 = dropped.getParentId();
+        if(parentId1 != null)  {
+            Catagory catagoryById = Guide.Instance.getCatagoryById(parentId1);
+            if(catagoryById != null) {
+                Resource instance = Resource.getInstance(parentId1);
+                if(instance != null) {
+                    catagoryById.dropChild(instance);
+                    Resource.dropInstance(dropped);
+                }
+              }
+
+        }
+        Guide.Instance.removeResource(dropped);
+         instances.remove(id1);
+        CommunityResourceDAO.deleteResourceAndDependents(id1);
+    }
 
     public static List<CommunityResource> getCommunityResources() {
           return new ArrayList<>(instances.values());

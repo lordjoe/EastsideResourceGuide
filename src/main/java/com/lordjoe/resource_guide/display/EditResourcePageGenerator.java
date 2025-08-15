@@ -3,11 +3,9 @@ package com.lordjoe.resource_guide.display;
 import com.lordjoe.resource_guide.Resource;
 import com.lordjoe.resource_guide.util.URLValidator;
 
-import static com.lordjoe.resource_guide.display.CategoryPageGenerator.escapeHtml;
-
 public class EditResourcePageGenerator {
 
-    public static String generateEditPage(Resource resource) {
+    public static String generateEditPage( Resource resource) {
         boolean isNew = resource.getId() == 0;
 
         StringBuilder html = new StringBuilder();
@@ -19,13 +17,12 @@ public class EditResourcePageGenerator {
         html.append("            background-image: url('/Cover.png');\n");
         html.append("            background-size: cover;\n");
         html.append("            background-position: center;\n");
-        html.append("            background-repeat: no-repeat;\n");
         html.append("            font-family: Arial, sans-serif;\n");
         html.append("            margin: 0;\n");
         html.append("            padding: 20px;\n");
         html.append("        }\n");
         html.append("        .form-container {\n");
-        html.append("            max-width: 700px;\n");
+        html.append("            max-width: 600px;\n");
         html.append("            margin: 60px auto;\n");
         html.append("            padding: 30px;\n");
         html.append("            background-color: rgba(255,255,255,0.95);\n");
@@ -63,65 +60,75 @@ public class EditResourcePageGenerator {
         html.append("  <form method=\"post\" action=\"/update-resource\">\n");
 
         html.append("    <input type=\"hidden\" name=\"id\" value=\"").append(resource.getId()).append("\" />\n");
-        Object obj = resource.getParentId() ;
-        html.append("    <input type=\"hidden\" name=\"parentId\" value=\"").append(obj).append("\" />\n");
+        int parentId = resource.getParentId();
+        html.append("    <input type=\"hidden\" name=\"parentId\" value=\"")
+                .append(parentId )
+                .append("\" />\n");
 
         html.append("    <label for=\"name\">Name:</label>\n");
-        html.append("    <input type=\"text\" id=\"name\" name=\"name\" required value=\"").append(escape(resource.getName())).append("\" />\n");
+        html.append("    <input type=\"text\" id=\"name\" name=\"name\" required value=\"")
+                .append(escape(resource.getName()))
+                .append("\" />\n");
 
         html.append("    <label for=\"description\">Description:</label>\n");
-        html.append("    <textarea name=\"description\">").append(escape(resource.getDescription())).append("</textarea>\n");
+        html.append("    <textarea name=\"description\">")
+                .append(escape(resource.getDescription()))
+                .append("</textarea>\n");
 
         html.append("    <label for=\"phone\">Phone:</label>\n");
-        html.append("    <input type=\"text\" name=\"phone\" value=\"").append(escape(resource.getPhone())).append("\" />\n");
+        html.append("    <input type=\"text\" name=\"phone\" value=\"")
+                .append(escape(resource.getPhone()))
+                .append("\" />\n");
 
         html.append("    <label for=\"email\">Email:</label>\n");
-        html.append("    <input type=\"text\" name=\"email\" value=\"").append(escape(resource.getEmail())).append("\" />\n");
+        html.append("    <input type=\"text\" name=\"email\" value=\"")
+                .append(escape(resource.getEmail()))
+                .append("\" />\n");
 
         html.append("    <label for=\"website\">Website:</label>\n");
-        String website = resource.getWebsite();
-        boolean valid = URLValidator.isValidURL(website);
-        if (valid) {
-            html.append("    <input type=\"text\" name=\"website\" value=\"").append(escape(website)).append("\" />\n");
-        } else {
-                   String ws = escape(website).replace("http://","https://");
-                   if(!ws.startsWith("https://"))
-                       ws = "https://"+ws;
-                    html.append("<span style='color:red;'>")
-                    .append("<a href='")
-                    .append(escapeHtml(ws))
-                    .append("' target='_blank' rel='noopener noreferrer'>")
-                    .append(escapeHtml(ws))
-                    .append("</a> (invalid)")
-                    .append("</span></p>");
-                    html.append("<span style='color:red;'>Invalid URL</span><br/>\n");
-            html.append("    <input type=\"text\" name=\"website\" value=\"").append(escape(website)).append("\" />\n");
-            html.append("</span.");
+        String website = resource.getWebsite() == null ? "" : resource.getWebsite();
+        boolean valid = website.isEmpty() || URLValidator.isValidURL(website);
+        if (!valid) {
+            html.append("    <span style='color:red;'>Invalid URL</span><br/>\n");
         }
+        html.append("    <input type=\"text\" name=\"website\" value=\"")
+                .append(escape(website))
+                .append("\" />\n");
 
         html.append("    <label for=\"address\">Address:</label>\n");
-        html.append("    <input type=\"text\" name=\"address\" value=\"").append(escape(resource.getAddress())).append("\" />\n");
+        html.append("    <input type=\"text\" name=\"address\" value=\"")
+                .append(escape(resource.getAddress()))
+                .append("\" />\n");
 
         html.append("    <label for=\"hours\">Hours:</label>\n");
-        html.append("    <input type=\"text\" name=\"hours\" value=\"").append(escape(resource.getHours())).append("\" />\n");
+        html.append("    <input type=\"text\" name=\"hours\" value=\"")
+                .append(escape(resource.getHours()))
+                .append("\" />\n");
 
         html.append("    <label for=\"notes\">Notes:</label>\n");
-        html.append("    <input type=\"text\" name=\"notes\" value=\"").append(escape(resource.getNotes())).append("\" />\n");
+        html.append("    <input type=\"text\" name=\"notes\" value=\"")
+                .append(escape(resource.getNotes()))
+                .append("\" />\n");
 
         html.append("    <div class=\"button-group\">\n");
         html.append("      <button type=\"submit\">").append(isNew ? "Create" : "Save").append("</button>\n");
-
-        if (!isNew) {
-            html.append("      <form method=\"post\" action=\"/delete-resource\" onsubmit=\"return confirm('Are you sure you want to delete this resource?');\">\n");
-            html.append("        <input type=\"hidden\" name=\"id\" value=\"").append(resource.getId()).append("\" />\n");
-            html.append("        <button type=\"submit\" style=\"background-color: #d32f2f;\">Delete</button>\n");
-            html.append("      </form>\n");
-        }
-
         html.append("      <button type=\"button\" onclick=\"window.history.back()\">Cancel</button>\n");
         html.append("    </div>\n");
 
-        html.append("  </form>\n</div>\n</body></html>");
+        html.append("  </form>\n");
+
+        if (!isNew) {
+            html.append("  <form method=\"post\" action=\"/delete-resource\" ")
+                    .append("onsubmit=\"return confirm('Are you sure you want to delete this resource?');\" ")
+                    .append("style=\"margin-top: 10px;\">\n");
+            html.append("    <input type=\"hidden\" name=\"id\" value=\"")
+                    .append(resource.getId())
+                    .append("\" />\n");
+            html.append("    <button type=\"submit\" style=\"background-color: #d32f2f;\">Delete</button>\n");
+            html.append("  </form>\n");
+        }
+
+        html.append("</div>\n</body></html>");
 
         return html.toString();
     }

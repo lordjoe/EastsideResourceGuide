@@ -6,7 +6,7 @@ package com.lordjoe.utilities;
  * @author Steve LewisS
  */
 public class Encrypt {
-    public static final int CYPHER_LENGTH = 240; // Increased to accommodate longer encrypted strings
+    public static final int CYPHER_LENGTH = 120; // Increased to accommodate longer encrypted strings
     public static final String BASE_KEY = "LordJoe2000.";
     public static final String DEFAULT_KEY_ENCRYPTED = "HwpsFRwPmdaFM53lsbwBGZlhvB7QnN8vEiOcN2ShnTFQNSD1EDbyK9dd5T93j92CKvY+kfAuffH94K+dzvmVN/GqwjYLXadtswIx5Qr+7/9UA7PLlSTBAsGdKimcWI/GwZ0qKZxYj8bBnSopnFiPxsGdKimcWI/GwZ0qKZxYj8bBnSopnFiPxsGdKimcWI/GwZ0qKZxYj8bBnSopnFiPxsGdKimcWI/GwZ0qKZxYj8bBnSopnFiPxsGdKimcWI/GwZ0qKZxYj8bBnSopnFiPxsGdKimcWI/GwZ0qKZxYj8bBnSopnFiPxg==";
     private static  String DEFAULT_KEYX; //  = "What hath God wrought.In union thers is strength. In money glory and in neigher peace.";

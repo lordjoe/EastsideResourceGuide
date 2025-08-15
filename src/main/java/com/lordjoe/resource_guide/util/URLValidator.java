@@ -80,7 +80,8 @@ public class URLValidator {
             if (!urlString.startsWith("https://"))
                 urlString = "https://" + urlString;
         }
-
+        if(CheckURLValidation.KnownGoodURLS.contains(urlString) )
+            return true;
         if (!forceCheck && !needsCheck(urlString)) {
              urlString = urlString.replace("http://", "https://");
             if (!urlString.startsWith("https://"))
@@ -88,6 +89,9 @@ public class URLValidator {
              return goodURLs.contains(urlString);
         }
         try {
+  
+            if(goodURLs.contains(urlString))
+                return true; 
             boolean ret = false;
 
 
@@ -105,12 +109,10 @@ public class URLValidator {
             int code = huc.getResponseCode();
             // Accept 2xx (OK) and 3xx (redirects)
             if (code >= 200 && code < 400) {
-                System.out.println(" good code" + urlString);
-               ret = true;
+                  ret = true;
             }
             if (code == 404) {
-                System.out.println(urlString + " 404 " + code);
-                ret = Response404Checker(huc);
+                  ret = Response404Checker(huc);
             }
             if (code == 403)
                 ret = true;
@@ -119,20 +121,17 @@ public class URLValidator {
             if (ret) {
                 goodURLs.add(urlString);
                 CheckURLValidation.KnownGoodURLS.add(urlString);
-                System.out.println( "\"" + urlString + "\",");
-                return true;
+                 return true;
             } else {
                 if(isValidURLWithJsoup(urlString)) {
                     goodURLs.add(urlString);
                     CheckURLValidation.KnownGoodURLS.add(urlString);
-                    System.out.println( "\"" + urlString + "\",");
-                    return true;
+                     return true;
                 }
 
                 badURLs.add(urlString);
                 CheckURLValidation.KnownBadURLS.add(urlString);
-                System.out.println("bad " + "\"" + urlString + "\",");
-
+     
             }
             return false;
         } catch (Exception e) {

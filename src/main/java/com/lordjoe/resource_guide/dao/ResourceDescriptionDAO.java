@@ -16,36 +16,50 @@ import java.util.Map;
 public class ResourceDescriptionDAO {
 
     public static int insert(ResourceDescription description) throws SQLException {
-//        if(description.isBlock()) {
-//            System.out.println("Inserting Block\n " + description.getDescription());
- //       }
         int ret = 0;
-        if(description.getResourceId() != 0) {
-            return description.getResourceId();
+
+        // If no resource_id provided, fail early
+        if (description.getResourceId() == 0) {
+            throw new IllegalArgumentException("resource_id must be set before inserting description");
         }
-        String sql = "INSERT INTO resource_descriptions (  content, is_block) VALUES (?, ?, ?) RETURNING resource_id ";
-        try (Connection conn = DatabaseConnection.getConnection();
 
-             PreparedStatement stmt = conn.prepareStatement(sql)) {
+        try (Connection conn = DatabaseConnection.getConnection()) {
 
-             stmt.setString(1, description.getDescription());
-            stmt.setBoolean(2, description.isBlock());
-
-            ResultSet rs = stmt.executeQuery();
-            if (rs.next()) {
-                DatabaseConnection.clearConnection();
-                ret = rs.getInt("id");
-                 return ret;
+            // 1) Delete existing non-block descriptions for this resource
+            if (!description.isBlock()) {
+                try (PreparedStatement deleteStmt = conn.prepareStatement(
+                        "DELETE FROM resource_descriptions WHERE resource_id = ? AND is_block = FALSE")) {
+                    deleteStmt.setInt(1, description.getResourceId());
+                    deleteStmt.executeUpdate();
+                }
             }
-            throw new UnsupportedOperationException("Fix This"); // ToDo
+
+            // 2) Insert the new description
+            String sql = "INSERT INTO resource_descriptions (resource_id, content, is_block) " +
+                    "VALUES (?, ?, ?) RETURNING id";
+            try (PreparedStatement stmt = conn.prepareStatement(sql)) {
+                stmt.setInt(1, description.getResourceId());
+                stmt.setString(2, description.getDescription());
+                stmt.setBoolean(3, description.isBlock());
+
+                try (ResultSet rs = stmt.executeQuery()) {
+                    if (rs.next()) {
+                        ret = rs.getInt("id");
+                    }
+                }
+            }
+
+            DatabaseConnection.clearConnection();
         } catch (SQLException e) {
             throw new RuntimeException(e);
-
         }
-    }
-   
 
-public static Map<Integer, List<CommunityResource>> loadAllAsMap() throws SQLException {
+        return ret;
+    }
+
+
+
+    public static Map<Integer, List<CommunityResource>> loadAllAsMap() throws SQLException {
     Map<Integer, List<CommunityResource>> result = new HashMap<>();
 
     String sql = "SELECT * FROM community_resources";

@@ -18,15 +18,16 @@ public class EditResourceController {
     public String editResourcePage(@RequestParam(value = "id", required = false) Integer id,
                                    @RequestParam(value = "parentId", required = false) Integer parentId,
                                    Model model) throws Exception {
-         Resource resource;
+        Resource resource;
         boolean isNew = (id == null || id == 0);
 
         if (isNew) {
-           CommunityResource r  = CommunityResourceDAO.create(id,"",ResourceType.Resource,parentId,null) ;
-            resource =  Resource.getInstance(id) ;
+            // NOTE: If your DAO 'create' signature differs, keep your original line.
+            CommunityResource r = CommunityResourceDAO.create(id, "", ResourceType.Resource, parentId, null);
+            resource = Resource.getInstance(id);
             resource.populateFrom(r);
         } else {
-            resource = Resource.getInstance(id) ;
+            resource = Resource.getInstance(id);
         }
 
         model.addAttribute("resource", resource);
@@ -34,4 +35,6 @@ public class EditResourceController {
         model.addAttribute("coverImage", "/Cover.png");
         return EditResourcePageGenerator.generateEditPage(resource);
     }
+
+  
 }

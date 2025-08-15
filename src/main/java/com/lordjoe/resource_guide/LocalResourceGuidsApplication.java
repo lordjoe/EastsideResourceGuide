@@ -15,7 +15,7 @@ import org.springframework.boot.autoconfigure.jdbc.DataSourceAutoConfiguration;
 )
 public class LocalResourceGuidsApplication {
 
-    public static boolean DEBUG_ADMIN_MODE = true;
+    public static boolean DEBUG_ADMIN_MODE = false;
     public static void main(String[] args) {
         SpringApplication.run(LocalResourceGuidsApplication.class, args);
     }

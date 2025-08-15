@@ -265,9 +265,45 @@ public class CommunityResourceDAO {
         return results;
     }
 
+    public static void deleteResourceAndDependents(int resourceId) {
+        String deleteDescriptions = "DELETE FROM resource_descriptions WHERE resource_id = ?";
+        String deleteSites        = "DELETE FROM resource_sites        WHERE resource_id = ?";
+        String deleteResource     = "DELETE FROM community_resources    WHERE id = ?";
+
+        try (Connection conn = DatabaseConnection.getConnection()) {
+            boolean oldAutoCommit = conn.getAutoCommit();
+            conn.setAutoCommit(false);
+            try {
+                try (PreparedStatement ps = conn.prepareStatement(deleteDescriptions)) {
+                    ps.setInt(1, resourceId);
+                    ps.executeUpdate();
+                }
+                try (PreparedStatement ps = conn.prepareStatement(deleteSites)) {
+                    ps.setInt(1, resourceId);
+                    ps.executeUpdate();
+                }
+                try (PreparedStatement ps = conn.prepareStatement(deleteResource)) {
+                    ps.setInt(1, resourceId);
+                    ps.executeUpdate();
+                }
+
+                conn.commit();
+            } catch (SQLException e) {
+                conn.rollback();
+                throw new RuntimeException("Failed deleting resource " + resourceId + " and dependents", e);
+            } finally {
+                conn.setAutoCommit(oldAutoCommit);
+            }
+        } catch (SQLException e) {
+            throw new RuntimeException("DB error deleting resource " + resourceId, e);
+        }
+    }
+
     public static void deleteAll() throws SQLException {
         Connection conn = DatabaseConnection.getConnection();
         PreparedStatement stmt = conn.prepareStatement("DELETE FROM community_resources");
         stmt.executeUpdate();
     }
+
+
 }

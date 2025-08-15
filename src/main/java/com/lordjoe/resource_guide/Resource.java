@@ -14,6 +14,26 @@ import java.util.concurrent.ConcurrentHashMap;
 public class Resource extends GuideItem {
     public static final Map<Integer, Resource> cache = new ConcurrentHashMap<>();
 
+    public static void dropInstance(Resource dropped)
+    {
+        int id1 = dropped.getId();
+        Integer parentId1 = dropped.getParentId();
+        if(parentId1 != null)  {
+            Catagory catagoryById = Guide.Instance.getCatagoryById(parentId1);
+            if(catagoryById != null) {
+                catagoryById.dropChild(dropped);
+            }
+
+
+        }
+        CommunityResource instance = CommunityResource.getInstance(id1);
+        if(instance != null) {
+            CommunityResource.dropInstance(instance);
+        }
+        cache.remove(id1);
+    }
+
+
     private final int id;
     private final GuideItem parent;
     private String description;
@@ -37,6 +57,12 @@ public class Resource extends GuideItem {
 
     public static Resource getInstance(CommunityResource r, GuideItem parent) {
         return cache.computeIfAbsent(r.getId(), k -> new Resource(r, parent));
+    }
+
+    public static void dropInstance(CommunityResource r) {
+        int id1 = r.getId();
+        cache.remove(id1);
+        Guide.Instance.removeResource(r);
     }
 
     private Resource(int id, String name, GuideItem parent) {
@@ -85,9 +111,7 @@ public class Resource extends GuideItem {
     }
 
     public void setDescription(String description) {
-        if(description != null && description.contains("A program which provides day"))
-            System.out.println(description);
-        this.description = description;
+         this.description = description;
     }
 
     public String getAddress() {

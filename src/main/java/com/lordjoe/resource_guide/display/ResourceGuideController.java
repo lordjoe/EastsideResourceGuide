@@ -12,6 +12,7 @@ import org.springframework.ui.Model;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.ResponseBody;
+import org.springframework.security.web.csrf.CsrfToken;
 
 import java.awt.*;
 import java.io.IOException;
@@ -99,15 +100,24 @@ public class ResourceGuideController {
         return html.toString();
     }
 
-    @GetMapping("/login")
+    @GetMapping(path = "/login", produces = "text/html")
     @ResponseBody
-    public String loginPage(
-            @RequestParam(value = "error", required = false) String error,
-            @RequestParam(value = "logout", required = false) String logout
-    ) {
-        boolean showError = (error != null);
-        boolean showLogout = (logout != null);
-        return LoginPageGenerator.generateLoginPage(showError, showLogout);
+    public String loginPage(HttpServletRequest request) {
+        // Spring Security exposes the CsrfToken as a request attribute when CSRF is enabled
+        CsrfToken token = (CsrfToken) request.getAttribute(CsrfToken.class.getName());
+
+        // Optional: show messages from query params like ?error or ?logout
+        String msg = null;
+        if ("true".equals(request.getParameter("error"))) {
+            msg = "Invalid username or password.";
+        } else if (request.getParameter("logout") != null) {
+            msg = "You have been logged out.";
+        }
+
+        String csrfParam = token != null ? token.getParameterName() : null;
+        String csrfValue = token != null ? token.getToken() : null;
+
+        return LoginPageGenerator.generateLoginPage(csrfParam, csrfValue, msg);
     }
 
 

@@ -53,6 +53,7 @@ public class GuideItem implements Comparable<GuideItem> {
     public void dropChild(GuideItem resource) {
         String name = resource.getName();
         NameToResource.remove(name);
+        resources.remove(resource);
     }
     public void addChild(GuideItem resource) {
         String name = resource.getName();
