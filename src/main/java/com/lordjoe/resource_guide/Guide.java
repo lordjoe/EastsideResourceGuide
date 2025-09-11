@@ -26,7 +26,7 @@ public class Guide {
 
     private final Map<Integer, GuideItem> idToCatagory = new HashMap<>();
     private final Map<String, GuideItem> nameToCatagory = new HashMap<>();
-     private final Map<Integer, Resource> idToBlock = new HashMap<>();
+    private final Map<Integer, Resource> idToBlock = new HashMap<>();
     private final List<Catagory> catagories = new ArrayList<>();
     private final Map<String, AppUser> userMap = new HashMap<>();
 
@@ -50,13 +50,13 @@ public class Guide {
     }
 
     public void reload() {
-        if ( loaded) {
-           loaded = false;
+        if (loaded) {
+            loaded = false;
             idToCatagory.clear();
             userMap.clear();
             idToBlock.clear();
-             nameToCatagory.clear();
-         }
+            nameToCatagory.clear();
+        }
         guaranteeLoaded();
     }
 
@@ -67,7 +67,7 @@ public class Guide {
     }
 
     public List<Catagory> getSubCatagories() {
-       List<Catagory> ret = new ArrayList<>();
+        List<Catagory> ret = new ArrayList<>();
         for (Catagory catagory : getCatagories()) {
             List<SubCatagory> subCatagories = catagory.getSubCatagories();
             ret.addAll(subCatagories);
@@ -77,7 +77,7 @@ public class Guide {
 
     public Catagory getUnClassified() {
         for (Catagory catagory : getCatagories()) {
-            if(catagory.getName().equalsIgnoreCase("unclassified"))
+            if (catagory.getName().equalsIgnoreCase("unclassified"))
                 return catagory;
         }
         return null;
@@ -94,9 +94,9 @@ public class Guide {
         return CommunityResource.getCommunityResources();
     }
 
-    public Resource getInstance(int id )  {
+    public Resource getInstance(int id) {
         guaranteeLoaded();
-        return  Resource.getInstance(id);
+        return Resource.getInstance(id);
 
     }
 
@@ -112,20 +112,22 @@ public class Guide {
         Integer parentId = r.getParentId();
         Catagory catagoryById = getCatagoryById(parentId);
         Resource rx = Resource.getInstance(r, catagoryById);
-          if (catagoryById != null) {
-               catagoryById.addChild(rx);
-         }
+        if (catagoryById != null) {
+            catagoryById.addChild(rx);
+        }
     }
 
 
     public void removeResource(CommunityResource r) {
 
-         GuideItem guideItem = idToCatagory.get(r.getParentId());
-        Resource rx = Resource.getInstance(r,guideItem);
-        if (guideItem == null) {
+        GuideItem guideItem = idToCatagory.get(r.getParentId());
+        Resource rx = Resource.getInstance(r, guideItem);
+        if (guideItem != null) {
             guideItem.dropChild(rx);
         }
+        int id = r.getId();
         
+
     }
 
 
@@ -161,7 +163,7 @@ public class Guide {
         Map<Integer, ResourceSite> sites = ResourceSiteDAO.loadAllAsMap();
         Map<Integer, List<ResourceDescription>> blockd = mapBlockResources(descriptions);
 
-        Set<String>  testedGoodUlrs = new HashSet<>();
+        Set<String> testedGoodUlrs = new HashSet<>();
         Set<String> testedBadUlrs = new HashSet<>();
 
         createDatabase(); // make sure tablews exist
@@ -231,22 +233,21 @@ public class Guide {
                 }
                 String url = res.getWebsite();
 
-                if(url != null) {
-                   boolean valid = URLValidator.isValidURL(url);
-                   if(!valid && !CheckURLValidation.KnownBadURLS.contains(url) ) {
-                       valid = URLValidator.isValidURL(url);
-       //                System.out.println("\"" + url + "\",");
-                       testedBadUlrs.add(url);
+                if (url != null) {
+                    boolean valid = URLValidator.isValidURL(url);
+                    if (!valid && !CheckURLValidation.KnownBadURLS.contains(url)) {
+                        valid = URLValidator.isValidURL(url);
+                        //                System.out.println("\"" + url + "\",");
+                        testedBadUlrs.add(url);
 
-                   }
-                   else {
-                      testedGoodUlrs.add(url);
-                   }
+                    } else {
+                        testedGoodUlrs.add(url);
+                    }
                 }
 
                 parent.addChild(res);
 
- ;
+                ;
             }
             if (type == ResourceType.Block) {
                 GuideItem parent = resolveParent(cr.getParentId());
@@ -264,17 +265,16 @@ public class Guide {
             }
         }
         loadUsers();
-        showUnlisted(testedGoodUlrs,testedBadUlrs) ;
+        showUnlisted(testedGoodUlrs, testedBadUlrs);
         loaded = true;
     }
 
 
-    
     public void loadUsers() {
         userMap.clear();
         List<AppUser> users = LoadUsers();
         for (AppUser user : users) {
-             userMap.put(user.getEmail(),user);
+            userMap.put(user.getEmail(), user);
         }
 
     }
@@ -282,7 +282,7 @@ public class Guide {
     public AppUser getUserByUsername(String username) {
         return userMap.get(username);
     }
-    
+
     private Map<Integer, List<ResourceDescription>> mapBlockResources(Map<Integer, List<ResourceDescription>> descriptions) {
         if (descriptions == null)
             return null;
@@ -339,14 +339,13 @@ public class Guide {
     private String fixBropenURL(CommunityResource res) {
         String[] items = res.getWebsite().split(" ");
         res.setWebsite(items[0]);
-        if(items.length > 1)  {
+        if (items.length > 1) {
             String test = items[1];
-            if(test.contains("Hours")) {
+            if (test.contains("Hours")) {
                 res.setHours(items[1]);
-            }
-            else if(test.contains("Address")) {
-               test = test.replace("Address","");
-                   res.setAddress(test.trim());
+            } else if (test.contains("Address")) {
+                test = test.replace("Address", "");
+                res.setAddress(test.trim());
             }
         }
         CommunityResource data = CommunityResource.getInstance(res.getId());
@@ -355,15 +354,15 @@ public class Guide {
     }
 
     private void validateURLs() {
-        List<String >  badURLS = new ArrayList<>();
-        List<String >  goodURLS = new ArrayList<>();
+        List<String> badURLS = new ArrayList<>();
+        List<String> goodURLS = new ArrayList<>();
 
         for (CommunityResource value : CommunityResource.getCommunityResources()) {
             String website = value.getWebsite();
             if (website != null) {
                 boolean needsCheck = com.lordjoe.resource_guide.util.URLValidator.needsCheck(website);
-                if(website.contains(" ")) {
-                   fixBropenURL(value);
+                if (website.contains(" ")) {
+                    fixBropenURL(value);
                 }
                 needsCheck = !CheckURLValidation.KnownGoodURLS.contains(website);
                 if (needsCheck) {
@@ -377,13 +376,14 @@ public class Guide {
 
             }
         }
-        System.out.println("Good URLs  " );
+        System.out.println("Good URLs  ");
         for (String goodURL : goodURLS) {
             System.out.println("\"" + goodURL + "\",");
         }
-        System.out.println("Bad URLs  " );
+        System.out.println("Bad URLs  ");
         for (String goodURL : badURLS) {
-            System.out.println("\"" + goodURL + "\",");        }
+            System.out.println("\"" + goodURL + "\",");
+        }
     }
 
 

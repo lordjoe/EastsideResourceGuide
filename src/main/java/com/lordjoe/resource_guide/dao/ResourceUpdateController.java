@@ -56,12 +56,14 @@ public class ResourceUpdateController {
 
         // ---------- C) update description (deletes previous non-blocks, then insert) ----------
         String desc = description == null ? "" : description;
-        ResourceDescription d = new ResourceDescription(id, desc, false);
-        try {
-            ResourceDescriptionDAO.insert(d);
-        } catch (SQLException e) {
-            throw new RuntimeException(e);
+        if(desc.length() > 0) {
+            ResourceDescription d = new ResourceDescription(id, desc, false);
+            try {
+                ResourceDescriptionDAO.insert(d);
+            } catch (SQLException e) {
+                throw new RuntimeException(e);
 
+            }
         }
 
         // ---------- D) update cached Resource (NO DB READS) ----------
@@ -91,16 +93,12 @@ public class ResourceUpdateController {
 
         Integer redirectCategoryId = resolveCategoryId(parentId, id);
 
-        // write-only delete
-        CommunityResourceDAO.delete(id);
-
+   
         // drop from caches (NO DB READS)
         CommunityResource cachedCR = CommunityResource.getInstance(id);
-        if (cachedCR != null) {
-            Resource.dropInstance(cachedCR);
-            // If Guide keeps maps/lists, remove there as well, e.g.:
-            // Guide.Instance.removeResource(id);
-        }
+         if (cachedCR != null) {
+             CommunityResource.dropInstance(cachedCR);
+          }
 
         String target = (redirectCategoryId != null) ? "/main/category?id=" + redirectCategoryId : "/main";
         RedirectView rv = new RedirectView(target, true);

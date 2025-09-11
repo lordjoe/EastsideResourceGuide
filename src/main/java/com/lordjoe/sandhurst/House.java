@@ -61,6 +61,10 @@ public class House {
         inhabitants.add(inhabitant);
     }
 
+    public void removeInhabitant(Inhabitant inhabitant) {
+        inhabitants.remove(inhabitant);
+    }
+
     public List<ImageAsset> getImages() {
         return new ArrayList<>(images);
     }

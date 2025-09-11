@@ -23,17 +23,18 @@ public class CommunityResource {
         if(parentId1 != null)  {
             Catagory catagoryById = Guide.Instance.getCatagoryById(parentId1);
             if(catagoryById != null) {
-                Resource instance = Resource.getInstance(parentId1);
+                Resource instance = Resource.getInstance(id1);
                 if(instance != null) {
                     catagoryById.dropChild(instance);
                     Resource.dropInstance(dropped);
-                }
+                  }
               }
 
         }
         Guide.Instance.removeResource(dropped);
          instances.remove(id1);
         CommunityResourceDAO.deleteResourceAndDependents(id1);
+ 
     }
 
     public static List<CommunityResource> getCommunityResources() {

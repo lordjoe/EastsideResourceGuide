@@ -16,7 +16,7 @@ import java.util.UUID;
 public class ImageUtilities {
 
 
-    public static String uploadImage(byte[] fileBytes, int sourceId, ImageAssetType sourceType) throws Exception {
+    public static ImageAsset uploadImage(byte[] fileBytes, int sourceId, ImageAssetType sourceType) throws Exception {
         BufferedImage original = ImageIO.read(new ByteArrayInputStream(fileBytes));
 
         ByteArrayOutputStream os = new ByteArrayOutputStream();
@@ -35,7 +35,7 @@ public class ImageUtilities {
             new ImageAssetDAO(conn).insert(asset);
         }
 
-        return imageUrl;
+        return asset;
     }
 
     private static BufferedImage resizeImage(BufferedImage originalImage) {

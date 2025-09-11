@@ -48,6 +48,20 @@ public class ImageAssetDAO {
 
 
    
+    public List<ImageAsset> loadAllImages() {
+        List<ImageAsset> results = new ArrayList<>();
+        try (PreparedStatement stmt = connection.prepareStatement(
+                "SELECT * FROM image_asset ")) {
+             ResultSet rs = stmt.executeQuery();
+            while (rs.next()) {
+                results.add(fromResultSet(rs));
+            }
+        } catch (SQLException e) {
+            throw new RuntimeException("Error fetching images", e);
+        }
+        return results;
+    }
+
     public List<ImageAsset> getImagesForInhabitant(int inhabitantId) {
         List<ImageAsset> results = new ArrayList<>();
         try (PreparedStatement stmt = connection.prepareStatement(

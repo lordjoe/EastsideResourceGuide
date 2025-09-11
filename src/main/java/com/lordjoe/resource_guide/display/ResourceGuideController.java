@@ -28,6 +28,11 @@ public class ResourceGuideController {
         response.sendRedirect("/main");
     }
 
+    @GetMapping("/main/login")
+    public void redirectToLogin(HttpServletResponse response) throws IOException {
+        response.sendRedirect("/login");
+    }
+
     @GetMapping("/main")
     @ResponseBody
     public String mainContent(HttpServletRequest request) {
@@ -100,7 +105,7 @@ public class ResourceGuideController {
         return html.toString();
     }
 
-    @GetMapping(path = "/login", produces = "text/html")
+    @GetMapping(path = {"/login", "/main/login"}, produces = "text/html")
     @ResponseBody
     public String loginPage(HttpServletRequest request) {
         // Spring Security exposes the CsrfToken as a request attribute when CSRF is enabled

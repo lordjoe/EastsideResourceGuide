@@ -25,6 +25,9 @@ public class Inhabitant {
         return id;
     }
 
+    public Integer getHouseId() {
+        return resourceId;
+    }
     public int getResourceId() {
         return resourceId;
     }

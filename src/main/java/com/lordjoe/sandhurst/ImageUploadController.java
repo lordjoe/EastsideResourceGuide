@@ -17,11 +17,7 @@ public class ImageUploadController {
     ) {
         try {
             // Upload to Firebase and get URL
-            String url = FirebaseUploader.uploadFile(file); // assumes this method exists
-
-            // Create and associate image asset
-            ImageAsset asset = new ImageAsset(inhabitantId, ImageAssetType.inhabitant, url);
-            ImageAssetDAO.insert(asset);
+            ImageAsset asset = ImageUtilities.uploadImage(file.getBytes(),inhabitantId,ImageAssetType.inhabitant); // assumes this method exists
             Neighborhood.Instance.getInhabitantById(inhabitantId).getImages().add(asset);
 
             // Redirect back to edit page

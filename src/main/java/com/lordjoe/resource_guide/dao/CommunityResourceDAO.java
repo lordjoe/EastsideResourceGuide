@@ -175,6 +175,10 @@ public class CommunityResourceDAO {
 
 
     public static void delete(int resourceId) {
+        CommunityResource instance = CommunityResource.getInstance(resourceId);
+        if(instance != null)  {
+            CommunityResource.dropInstance(instance);
+        }
         try (Connection conn = DatabaseConnection.getConnection()) {
             // Delete from resource_descriptions (ON DELETE CASCADE should help, but ensure cleanup)
             try (PreparedStatement stmt = conn.prepareStatement(

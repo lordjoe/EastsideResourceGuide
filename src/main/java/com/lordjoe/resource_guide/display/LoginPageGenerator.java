@@ -58,7 +58,7 @@ public class LoginPageGenerator {
         html.append("    <label for='fp-email'>Forgot your password?</label>\n");
         html.append("    <input type='email' id='fp-email' name='email' inputmode='email' autocomplete='email' ")
                 .append("placeholder='Enter your email' required>\n");
-        html.append("    <button type='submit'>Reset Password</button>\n");
+        html.append("    <button type='submit'>Send Email</button>\n");
         html.append("  </form>\n");
         html.append("</div>\n");
 

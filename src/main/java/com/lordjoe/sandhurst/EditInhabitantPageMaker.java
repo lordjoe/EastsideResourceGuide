@@ -1,65 +1,127 @@
 package com.lordjoe.sandhurst;
 
+import jakarta.servlet.http.HttpServletRequest;
+import org.springframework.security.web.csrf.CsrfToken;
+
 public class EditInhabitantPageMaker {
 
-    public static String generate(Inhabitant inh) {
-        House house =  inh.getHouse();
+    public static String generate(Inhabitant inh, HttpServletRequest request) {
+        CsrfToken token = (CsrfToken) request.getAttribute(CsrfToken.class.getName());
+        String csrfParam = token != null ? token.getParameterName() : null;
+        String csrfValue = token != null ? token.getToken() : null;
 
-        StringBuilder out = new StringBuilder();
-        out.append("<html><head><title>Edit Inhabitant</title>\n")
-                .append("<style>\n")
-                .append(".dropzone { width: 300px; height: 150px; border: 2px dashed #ccc; border-radius: 10px; display: flex; justify-content: center; align-items: center; margin: 10px 0; }\n")
-                .append(".dropzone.hover { border-color: #666; }\n")
-                .append("</style>\n")
-                .append("</head><body>\n");
+        // Null-safe values
+        String name  = escape(inh.getName());
+        String email = escape(inh.getEmail());
+        String phone = escape(inh.getPhone());
+        String type  = escape(inh.getType() != null ? inh.getType().name() : "Adult");
 
-        out.append("<h1>Edit Inhabitant: ").append(inh.getName()).append("</h1>\n");
+        // If you already expose an endpoint that serves the current photo, this will show it.
+        // If not, it simply stays hidden (onerror hides it).
+        String currentPhotoSrc = "/sandhurst/inhabitant/photo?id=" + inh.getId();
 
-        // Inhabitant info form
-        out.append("<form action='/sandhurst/updateInhabitant' method='POST'>\n")
-                .append("<input type='hidden' name='id' value='").append(inh.getId()).append("'/>\n")
-                .append("Name: <input type='text' name='name' value='").append(inh.getName()).append("'/><br/>\n")
-                .append("Phone: <input type='text' name='phone' value='").append(inh.getPhone() != null ? inh.getPhone() : "").append("'/><br/>\n")
-                .append("Email: <input type='text' name='email' value='").append(inh.getEmail() != null ? inh.getEmail() : "").append("'/><br/>\n")
-                .append("<button type='submit'>Save</button>\n");
+        StringBuilder html = new StringBuilder();
+        html.append("<!DOCTYPE html><html><head><meta charset='utf-8'><title>Edit Inhabitant</title>")
+                .append("<link rel='icon' type='image/x-icon' href='/favicon.ico'>")
+                .append("<style>")
+                .append("body{font-family:Arial,sans-serif;background:#f5f7fb;margin:0;padding:24px}")
+                .append(".card{max-width:640px;margin:40px auto;background:#fff;border-radius:12px;")
+                .append("box-shadow:0 8px 24px rgba(0,0,0,.08);padding:24px}")
+                .append("label{display:block;font-weight:bold;margin:12px 0 6px}")
+                .append("input,select{width:100%;padding:10px;border:1px solid #d4d7e1;border-radius:8px;font-size:15px;box-sizing:border-box}")
+                .append(".row{display:flex;gap:10px}")
+                .append(".row > *{flex:1}")
+                .append(".actions{display:flex;gap:10px;margin-top:20px}")
+                .append("button{padding:12px 16px;border:0;border-radius:10px;cursor:pointer;font-size:15px}")
+                .append(".primary{background:#3f51b5;color:#fff}")
+                .append(".secondary{background:#e9ecf6;color:#1a2240}")
+                .append(".danger{background:#d32f2f;color:#fff}")
+                .append(".photo-wrap{display:flex;gap:16px;align-items:flex-start;margin-top:8px}")
+                .append(".avatar{width:96px;height:96px;object-fit:cover;border-radius:12px;border:1px solid #d4d7e1;display:none}")
+                .append(".hint{font-size:12px;color:#555;margin-top:4px}")
+                .append("</style>")
+                .append("<script>")
+                .append("function previewPhoto(input){")
+                .append("  const img=document.getElementById('avatarPreview');")
+                .append("  if(input.files && input.files[0]){")
+                .append("    img.style.display='block';")
+                .append("    img.src=URL.createObjectURL(input.files[0]);")
+                .append("  }")
+                .append("}")
+                .append("</script>")
+                .append("</head><body>")
+                .append("<div class='card'>")
+                .append("<h2>Edit Inhabitant</h2>");
 
-        // Styled cancel button
-        out.append("<a href='/sandhurst/house?houseId=").append(house.getId()).append("' style='margin-left:10px; padding:8px 16px; background:#ccc; color:black; text-decoration:none; border-radius:6px;'>Cancel</a>\n");
-
-        out.append("</form><br/><br/>\n");
-
-        // Drag-and-drop style upload form
-        out.append("<form method='POST' action='/sandhurst/uploadImage' enctype='multipart/form-data'>\n")
-                .append("<input type='hidden' name='inhabitantId' value='").append(inh.getId()).append("'/>\n")
-                .append("<input type='hidden' name='sourceType' value='Inhabitant'/>\n")
-                .append("<div class='dropzone' ondrop='handleDrop(event)' ondragover='handleDragOver(event)' ondragleave='handleDragLeave(event)'>\n")
-                .append("Drop image here or click to select<br/><input type='file' name='file' accept='image/*' style='display:none' onchange='this.form.submit()'/>\n")
-                .append("</div>\n")
-                .append("</form>\n");
-
-        // Image display and delete
-        out.append("<h3>Images</h3>\n");
-        for (ImageAsset image : inh.getImages()) {
-            out.append("<div style='margin:10px 0;'>")
-                    .append("<img src='").append(image.getImageUrl()).append("' width='200' /><br/>")
-                    .append("<form method='POST' action='/sandhurst/deleteImage'>")
-                    .append("<input type='hidden' name='imageId' value='").append(image.getId()).append("'/>")
-                    .append("<button type='submit'>Delete</button>")
-                    .append("</form>")
-                    .append("</div>\n");
+        // --- UPDATE form (Save & Cancel both submit here) ---
+        html.append("<form method='post' action='/sandhurst/updateInhabitant' autocomplete='on' enctype='multipart/form-data'>");
+        if (csrfParam != null && csrfValue != null) {
+            html.append("<input type='hidden' name='").append(escape(csrfParam)).append("' value='").append(escape(csrfValue)).append("'>");
         }
 
-        out.append("<script>\n")
-                .append("function handleDrop(e) {\n")
-                .append("  e.preventDefault(); const input = e.currentTarget.querySelector('input[type=file]'); input.files = e.dataTransfer.files; input.form.submit(); }\n")
-                .append("function handleDragOver(e) { e.preventDefault(); e.currentTarget.classList.add('hover'); }\n")
-                .append("function handleDragLeave(e) { e.currentTarget.classList.remove('hover'); }\n")
-                .append("document.querySelector('.dropzone').addEventListener('click', function() {\n")
-                .append("  this.querySelector('input[type=file]').click(); });\n")
-                .append("</script>\n");
+        html.append("<input type='hidden' name='id' value='").append(inh.getId()).append("'>")
+                .append("<label for='name'>Name</label>")
+                .append("<input id='name' name='name' type='text' required value='").append(name).append("'>")
 
-        out.append("</body></html>\n");
+                .append("<div class='row'>")
+                .append("  <div><label for='email'>Email</label>")
+                .append("  <input id='email' name='email' type='email' inputmode='email' autocomplete='email' value='").append(email).append("'></div>")
+                .append("  <div><label for='phone'>Phone</label>")
+                .append("  <input id='phone' name='phone' type='text' inputmode='tel' autocomplete='tel' value='").append(phone).append("'></div>")
+                .append("</div>")
 
-        return out.toString();
+                .append("<label for='type'>Type</label>")
+                .append("<select id='type' name='type'>")
+                .append(option("Adult", type))
+                .append(option("Child", type))
+                .append(option("Pet", type))
+                .append(option("Other", type))
+                .append("</select>");
+
+        // --- PHOTO upload + preview + remove toggle ---
+        html.append("<label for='photo'>Picture</label>")
+                .append("<div class='photo-wrap'>")
+                .append("  <img id='avatarPreview' class='avatar' src='").append(escape(currentPhotoSrc)).append("' ")
+                .append("       onload=\"this.style.display='block'\" ")
+                .append("       onerror=\"this.style.display='none'\" alt='Current picture'>")
+                .append("  <div style='flex:1'>")
+                .append("    <input id='photo' name='photo' type='file' accept='image/*' onchange='previewPhoto(this)'>")
+                .append("    <div class='hint'>Accepted: JPG/PNG, up to a few MB (server limits may apply)</div>")
+                .append("    <label style='display:flex;align-items:center;gap:6px;margin-top:8px;'>")
+                .append("      <input type='checkbox' name='removePhoto' value='true'> Remove existing picture")
+                .append("    </label>")
+                .append("  </div>")
+                .append("</div>");
+
+        // Actions: Save and Cancel both submit to the SAME endpoint.
+        html.append("<div class='actions'>")
+                .append("  <button class='primary' type='submit' name='action' value='save'>Save</button>")
+                .append("  <button class='secondary' type='submit' name='action' value='cancel' title='Cancel changes (will still save)'>Cancel</button>")
+                .append("</div>")
+                .append("</form>");
+
+        // --- DELETE form (separate, with confirm) ---
+        html.append("<form method='post' action='/sandhurst/deleteInhabitant' ")
+                .append("onsubmit=\"return confirm('Delete this inhabitant? This cannot be undone.');\" ")
+                .append("style='margin-top:10px'>");
+        if (csrfParam != null && csrfValue != null) {
+            html.append("<input type='hidden' name='").append(escape(csrfParam)).append("' value='").append(escape(csrfValue)).append("'>");
+        }
+        html.append("<input type='hidden' name='id' value='").append(inh.getId()).append("'>")
+                .append("<button class='danger' type='submit'>Delete</button>")
+                .append("</form>");
+
+        html.append("</div></body></html>");
+        return html.toString();
+    }
+
+    private static String option(String value, String current) {
+        boolean selected = value.equalsIgnoreCase(current);
+        return "<option value='" + escape(value) + "'" + (selected ? " selected" : "") + ">" + escape(value) + "</option>";
+    }
+
+    private static String escape(String s) {
+        if (s == null) return "";
+        return s.replace("&", "&amp;").replace("\"", "&quot;").replace("<", "&lt;").replace(">", "&gt;");
     }
 }

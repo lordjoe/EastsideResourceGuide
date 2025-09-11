@@ -17,7 +17,7 @@ public class SandhurstDatabaseInitializer {
         Database.createDatabase();
         Database.loadHousesFromTSV("kirkland_houses.tsv");
         Database.loadInhabitantsFromTSV("sandhurst_people.csv");
-        Neighborhood.loadInHabitants();
+        Neighborhood.loadInHabitants(Neighborhood.Instance);
         File dir = new File("Sandhurst");
         File parcel = new File(dir, "SandhurstParcelReport.tsv.csv");
  //       Database.loadParcelsFromTSV(parcel);

@@ -33,19 +33,38 @@ public class Neighborhood {
             idToHouse.put(house.getId(), house);
             addressToHouse.put(house.getAddress().toUpperCase() , house);
         }
+
+        loadInHabitants(this);
+        loadImages(this);
     }
 
-    public static void loadInHabitants() {
+    public static void loadImages(Neighborhood instance) {
+        try (Connection conn = DatabaseConnection.getConnection()) {
+            ImageAssetDAO ix = new ImageAssetDAO(conn);
+            List<ImageAsset> imageAssets = ix.loadAllImages();
+            for (ImageAsset imageAsset : imageAssets) {
+                Inhabitant inhabitant = instance.getInhabitantById(imageAsset.getSourceId());
+                if (inhabitant != null) {
+                    inhabitant.getImages().add(imageAsset);
+                }
+            }
+        }
+        catch (SQLException ex)   {
+            ex.printStackTrace();
+        }
+    }
+
+    public static void loadInHabitants(Neighborhood instance) {
              try (Connection conn = DatabaseConnection.getConnection()) {
                 InhabitantDAO ix = new InhabitantDAO(conn);
-                ix.loadAllInhabitants();
+                ix.loadAllInhabitants(instance);
             }
             catch (SQLException ex)   {
                 ex.printStackTrace();
             }
-        for (House house : Instance.getHouses()) {
+        for (House house : instance.getHouses()) {
             for (Inhabitant inhabitant : house.getInhabitants()) {
-                Instance.idToInhabitant.put(inhabitant.getId(), inhabitant);
+                instance.idToInhabitant.put(inhabitant.getId(), inhabitant);
             }
         }
         }
@@ -77,7 +96,13 @@ public class Neighborhood {
         return null;
     }
 
+    public void removeInhabitant(int inhabitantId) {
+        Inhabitant i = getInhabitantById(inhabitantId) ;
+        House house = i.getHouse();
+        house.removeInhabitant(i);
+        idToInhabitant.remove(inhabitantId);
 
+    }
 
 
     public Inhabitant getInhabitantById(int id) {
