@@ -194,6 +194,7 @@ public class CommunityResource {
        CommunityResource ret = getInstance(id);
        if (ret == null) {
            ret = new CommunityResource(id);
+           ret.instances.put(id,ret);
        }
        ret.setName(name);
        ret.setType(type);

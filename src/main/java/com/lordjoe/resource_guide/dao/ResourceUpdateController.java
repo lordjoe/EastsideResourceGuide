@@ -93,8 +93,10 @@ public class ResourceUpdateController {
 
         Integer redirectCategoryId = resolveCategoryId(parentId, id);
 
-   
-        // drop from caches (NO DB READS)
+        // Delete from database
+        CommunityResourceDAO.delete(id);
+
+        // Drop from caches (NO DB READS)
         CommunityResource cachedCR = CommunityResource.getInstance(id);
          if (cachedCR != null) {
              CommunityResource.dropInstance(cachedCR);

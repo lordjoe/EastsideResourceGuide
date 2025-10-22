@@ -1,5 +1,6 @@
 package com.lordjoe.resource_guide.display;
 
+import com.lordjoe.resource_guide.GuideItem;
 import com.lordjoe.resource_guide.Resource;
 import com.lordjoe.resource_guide.dao.CommunityResourceDAO;
 import com.lordjoe.resource_guide.dao.ResourceType;
@@ -24,7 +25,8 @@ public class EditResourceController {
         if (isNew) {
             // NOTE: If your DAO 'create' signature differs, keep your original line.
             CommunityResource r = CommunityResourceDAO.create(id, "", ResourceType.Resource, parentId, null);
-            resource = Resource.getInstance(id);
+             GuideItem parent = GuideItem.getById(parentId);
+            resource = Resource.getInstance(id,parent);
             resource.populateFrom(r);
         } else {
             resource = Resource.getInstance(id);

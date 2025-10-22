@@ -112,7 +112,13 @@ public class EditResourcePageGenerator {
 
         html.append("    <div class=\"button-group\">\n");
         html.append("      <button type=\"submit\">").append(isNew ? "Create" : "Save").append("</button>\n");
-        html.append("      <button type=\"button\" onclick=\"window.history.back()\">Cancel</button>\n");
+
+        if (!isNew) {
+            html.append("      <button type=\"button\" onclick=\"window.history.back()\">Cancel</button>\n");
+        }
+        else {
+            html.append("      <button type=\"button\" onclick=\"window.history.back()\">Cancel</button>\n");
+        }
         html.append("    </div>\n");
 
         html.append("  </form>\n");

@@ -28,6 +28,7 @@ public class CommunityResourceDAO {
                 return ret;
             }
             try (Connection conn = DatabaseConnection.getConnection()) {
+                name = "Rename Me";
                 PreparedStatement stmt = conn.prepareStatement(
                         "INSERT INTO community_resources (name, type, parent_id) VALUES (?, ?, ?) RETURNING id");
                 stmt.setString(1, name);
@@ -47,7 +48,7 @@ public class CommunityResourceDAO {
                             stmt.executeUpdate();
                         }
                     }
-                    CommunityResource ret = CommunityResource.getInstance(newId);
+                    CommunityResource ret = CommunityResource.getResource(newId,name,type,parentId);
                     ret.setDescription(description);
                     ret.setParentId(parentId);
                     ret.setName(name);

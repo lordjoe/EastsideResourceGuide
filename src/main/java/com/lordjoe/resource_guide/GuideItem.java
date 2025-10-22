@@ -19,7 +19,12 @@ public class GuideItem implements Comparable<GuideItem> {
     private boolean block;       // true if this description is a formatted block
     private final List<Resource> blocks = new ArrayList<>();
     private final Map<String, GuideItem> NameToResource = new HashMap<>();
+    private static final Map<Integer, GuideItem> IdToResource = new HashMap<>();
     private final List<GuideItem> resources = new ArrayList<>();
+
+    public static GuideItem getById(int id) {
+        return IdToResource.get(id);
+    }
 
     public String toString() {
         return name;
@@ -48,6 +53,7 @@ public class GuideItem implements Comparable<GuideItem> {
         this.name = name;
         this.type = type;
         this.parentId = parentId;
+        IdToResource.put(id, this);
     }
 
     public void dropChild(GuideItem resource) {
