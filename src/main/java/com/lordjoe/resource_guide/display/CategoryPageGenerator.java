@@ -129,7 +129,11 @@ public class CategoryPageGenerator {
             return;
 
         Guide guide = Guide.Instance;
-        html.append("<div class=\"grid-item\">\n<h2>").append(escapeHtml(r.getName())).append("</h2>");
+        String name = r.getName();
+        if(name.equals("Rename Me"))    {
+            guide = Guide.Instance; // break here
+        }
+          html.append("<div class=\"grid-item\">\n<h2>").append(escapeHtml(name)).append("</h2>");
 
         if (r.getDescription() != null) html.append("<p>").append(escapeHtml(r.getDescription())).append("</p>");
         if (r.getPhone() != null) html.append("<p><strong>Phone:</strong> ").append(escapeHtml(r.getPhone())).append("</p>");

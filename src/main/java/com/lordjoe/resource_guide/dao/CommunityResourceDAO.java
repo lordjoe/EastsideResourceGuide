@@ -28,7 +28,7 @@ public class CommunityResourceDAO {
                 return ret;
             }
             try (Connection conn = DatabaseConnection.getConnection()) {
-                name = "Rename Me";
+              //  name = "Rename Me";
                 PreparedStatement stmt = conn.prepareStatement(
                         "INSERT INTO community_resources (name, type, parent_id) VALUES (?, ?, ?) RETURNING id");
                 stmt.setString(1, name);
@@ -185,7 +185,10 @@ public class CommunityResourceDAO {
             try (PreparedStatement stmt = conn.prepareStatement(
                     "DELETE FROM resource_descriptions WHERE resource_id = ?")) {
                 stmt.setInt(1, resourceId);
-                stmt.executeUpdate();
+                int affected = stmt.executeUpdate();
+                if (affected < 0) {
+                    throw new SQLException("Failed to delete resource_descriptions for resource_id = " + resourceId);
+                }
             }
 
             // Delete from resource_sites
@@ -308,6 +311,28 @@ public class CommunityResourceDAO {
         Connection conn = DatabaseConnection.getConnection();
         PreparedStatement stmt = conn.prepareStatement("DELETE FROM community_resources");
         stmt.executeUpdate();
+    }
+
+    public static void deleteResourceCascade(int resourceId) {
+        try (Connection c = DatabaseConnection.getConnection()) {
+            try (PreparedStatement ps = c.prepareStatement(
+                    "DELETE FROM resource_sites WHERE resource_id = ?")) {
+                ps.setInt(1, resourceId);
+                ps.executeUpdate();
+            }
+            try (PreparedStatement ps = c.prepareStatement(
+                    "DELETE FROM resource_descriptions WHERE resource_id = ?")) {
+                ps.setInt(1, resourceId);
+                ps.executeUpdate();
+            }
+            try (PreparedStatement ps = c.prepareStatement(
+                    "DELETE FROM community_resources WHERE id = ?")) {
+                ps.setInt(1, resourceId);
+                ps.executeUpdate();
+            }
+        } catch (SQLException e) {
+            throw new RuntimeException("Cascade delete failed for resource id=" + resourceId, e);
+        }
     }
 
 

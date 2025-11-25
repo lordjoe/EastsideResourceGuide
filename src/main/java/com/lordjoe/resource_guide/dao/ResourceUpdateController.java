@@ -3,6 +3,7 @@ package com.lordjoe.resource_guide.dao;
 import com.lordjoe.resource_guide.Catagory;
 import com.lordjoe.resource_guide.Guide;
 import com.lordjoe.resource_guide.Resource;
+import com.lordjoe.resource_guide.GuideItem;
 import com.lordjoe.resource_guide.model.CommunityResource;
 import com.lordjoe.resource_guide.model.ResourceDescription;
 import org.springframework.stereotype.Controller;
@@ -15,6 +16,12 @@ import java.sql.SQLException;
 @Controller
 public class ResourceUpdateController {
 
+    private final com.lordjoe.resource_guide.model.ResourceDraftService drafts;
+
+    public ResourceUpdateController(com.lordjoe.resource_guide.model.ResourceDraftService drafts) {
+        this.drafts = drafts;
+    }
+
     @PostMapping("/update-resource")
     public RedirectView updateResource(
             @RequestParam("id") Integer id,
@@ -26,7 +33,8 @@ public class ResourceUpdateController {
             @RequestParam(value = "website", required = false) String website,
             @RequestParam(value = "address", required = false) String address,
             @RequestParam(value = "hours", required = false) String hours,
-            @RequestParam(value = "notes", required = false) String notes
+            @RequestParam(value = "notes", required = false) String notes,
+            @RequestParam(value = "draftId", required = false) String draftId
     ) {
 
         // ---------- A) ensure we have an id ----------
@@ -39,6 +47,9 @@ public class ResourceUpdateController {
                     0, nullToEmpty(name), ResourceType.Resource, parentId, null
             );
             id = cr.getId();
+            if (draftId != null && !draftId.isEmpty()) {
+                drafts.markPersisted(draftId, id);
+            }
         }
 
         // ---------- B) update in-memory CommunityResource (NO DB READS) ----------
@@ -69,19 +80,34 @@ public class ResourceUpdateController {
         // ---------- D) update cached Resource (NO DB READS) ----------
         Resource cached = Resource.getInstance(id);
         if (cached == null) {
-            cached = Resource.getInstance(id); // your singleton accessor; if it creates, fine
+            // Attempt to create/cache the Resource using a resolved parent
+            Integer pid = parentId;
+            if (pid == null) {
+                CommunityResource resTmp = Guide.Instance.getResourceById(id);
+                if (resTmp != null) pid = resTmp.getParentId();
+            }
+            GuideItem parentGI = (pid != null) ? GuideItem.getById(pid) : null;
+            if (parentGI != null) {
+                cached = Resource.getInstance(id, nullToEmpty(name), parentGI);
+            }
         }
-        // keep these two lines even if populateFrom copies most fields,
-        // since you've said BOTH must be updated explicitly
-        cached.populateFrom(cr);
-        cached.setDescription(desc);
+        if (cached != null) {
+            // keep these two lines even if populateFrom copies most fields,
+            // since you've said BOTH must be updated explicitly
+            cached.populateFrom(cr);
+            cached.setDescription(desc);
+        }
 
         // If your Guide caches lists/maps, make them consistent here if you have helpers:
         // Guide.Instance.refreshResource(cr);  // (call only if it exists)
 
         // ---------- E) redirect to category page (absolute path) ----------
         Integer redirectCategoryId = resolveCategoryId(parentId, id);
-        String target = (redirectCategoryId != null) ? "/main/category?id=" + redirectCategoryId : "/main";
+
+        Catagory catagoryById = Guide.Instance.getCatagoryById(parentId);
+        Integer returnId = catagoryById.getCatagory().getId();
+
+        String target = (redirectCategoryId != null) ? "/main/category?id=" + returnId : "/main";
         RedirectView rv = new RedirectView(target, true);
         rv.setExposeModelAttributes(false);
         return rv;
@@ -93,8 +119,16 @@ public class ResourceUpdateController {
 
         Integer redirectCategoryId = resolveCategoryId(parentId, id);
 
+        CommunityResource cr = Guide.Instance.getResourceById(id);
+        CommunityResource.dropInstance(cr);
+
+        Catagory catagoryById = Guide.Instance.getCatagoryById(parentId);
+        GuideItem res = Resource.getById(id);
+        catagoryById.dropChild(res);
+
+        Guide.Instance.removeResource(cr);
         // Delete from database
-        CommunityResourceDAO.delete(id);
+        CommunityResourceDAO.deleteResourceCascade(id);
 
         // Drop from caches (NO DB READS)
         CommunityResource cachedCR = CommunityResource.getInstance(id);
@@ -102,7 +136,8 @@ public class ResourceUpdateController {
              CommunityResource.dropInstance(cachedCR);
           }
 
-        String target = (redirectCategoryId != null) ? "/main/category?id=" + redirectCategoryId : "/main";
+        Integer returnId = catagoryById.getCatagory().getId();
+        String target = (redirectCategoryId != null) ? "/main/category?id=" + returnId : "/main";
         RedirectView rv = new RedirectView(target, true);
         rv.setExposeModelAttributes(false);
         return rv;
@@ -110,7 +145,15 @@ public class ResourceUpdateController {
 
     // -------- helpers --------
 
-    private static String nullToEmpty(String s) { return s == null ? "" : s.trim(); }
+    private static String nullToEmpty(String s)
+    {
+        if(s != null)    {
+           s = s.trim();
+           if(s.length() == 0)
+               s = null;
+        }
+        return s;
+    }
 
     /** Prefer provided parentId; otherwise walk up using YOUR cached objects—no DB reads. */
     private static Integer resolveCategoryId(Integer parentId, Integer resourceId) {

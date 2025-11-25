@@ -18,6 +18,8 @@ public class CommunityResource {
 
     public static void dropInstance(CommunityResource dropped)
     {
+        if(dropped == null)
+            return;
         int id1 = dropped.getId();
         Integer parentId1 = dropped.getParentId();
         if(parentId1 != null)  {

@@ -43,6 +43,7 @@ public class Resource extends GuideItem {
     private String website;
     private String hours;
     private String notes;
+    private boolean isNew = false;
 
     public static Resource getInstance(int id ) {
         return cache.get(id);
@@ -161,6 +162,14 @@ public class Resource extends GuideItem {
 
     public void setNotes(String notes) {
         this.notes = notes;
+    }
+
+    public boolean isNew() {
+        return isNew;
+    }
+
+    public void setNew(boolean isNew) {
+        this.isNew = isNew;
     }
 
     public void reconcile(GuideItem r1) {

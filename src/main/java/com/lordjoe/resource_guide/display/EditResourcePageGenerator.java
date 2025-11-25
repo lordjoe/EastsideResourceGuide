@@ -5,8 +5,8 @@ import com.lordjoe.resource_guide.util.URLValidator;
 
 public class EditResourcePageGenerator {
 
-    public static String generateEditPage( Resource resource) {
-        boolean isNew = resource.getId() == 0;
+    public static String generateEditPage( Resource resource, String draftId) {
+        boolean isNew = resource.isNew() ;
 
         StringBuilder html = new StringBuilder();
         html.append("<!DOCTYPE html>\n<html><head>\n");
@@ -58,6 +58,11 @@ public class EditResourcePageGenerator {
         html.append("<div class=\"form-container\">\n");
         html.append("  <h2>").append(isNew ? "Create New Resource" : "Edit Resource").append("</h2>\n");
         html.append("  <form method=\"post\" action=\"/update-resource\">\n");
+        if (draftId != null && !draftId.isEmpty()) {
+            html.append("    <input type=\"hidden\" name=\"draftId\" value=\"")
+                .append(draftId)
+                .append("\" />\n");
+        }
 
         html.append("    <input type=\"hidden\" name=\"id\" value=\"").append(resource.getId()).append("\" />\n");
         int parentId = resource.getParentId();
@@ -117,7 +122,31 @@ public class EditResourcePageGenerator {
             html.append("      <button type=\"button\" onclick=\"window.history.back()\">Cancel</button>\n");
         }
         else {
-            html.append("      <button type=\"button\" onclick=\"window.history.back()\">Cancel</button>\n");
+            // For a new resource, cancelling should discard the draft and delete any persisted row
+            html.append("  </form>\n");
+            html.append("  <form method=\"post\" action=\"/resources/new/cancel\" style=\"display:inline; margin-left:10px;\">\n");
+            if (draftId != null && !draftId.isEmpty()) {
+                html.append("    <input type=\"hidden\" name=\"draftId\" value=\"")
+                    .append(draftId)
+                    .append("\" />\n");
+            }
+            html.append("    <input type=\"hidden\" name=\"parentId\" value=\"")
+                .append(parentId)
+                .append("\" />\n");
+            html.append("    <button type=\"submit\" style=\"background-color:#d32f2f;\">Cancel</button>\n");
+            html.append("  </form>\n");
+            html.append("  <form method=\"post\" action=\"/update-resource\">\n");
+            if (draftId != null && !draftId.isEmpty()) {
+                html.append("    <input type=\"hidden\" name=\"draftId\" value=\"")
+                    .append(draftId)
+                    .append("\" />\n");
+            }
+            html.append("    <input type=\"hidden\" name=\"id\" value=\"")
+                .append(resource.getId())
+                .append("\" />\n");
+            html.append("    <input type=\"hidden\" name=\"parentId\" value=\"")
+                .append(parentId)
+                .append("\" />\n");
         }
         html.append("    </div>\n");
 

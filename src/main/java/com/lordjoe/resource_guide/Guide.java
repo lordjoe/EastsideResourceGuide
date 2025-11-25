@@ -14,7 +14,6 @@ import com.lordjoe.resource_guide.util.URLValidator;
 import java.sql.SQLException;
 import java.util.*;
 
-import static com.lordjoe.resource_guide.CheckURLValidation.showUnlisted;
 import static com.lordjoe.resource_guide.Database.createDatabase;
 import static com.lordjoe.resource_guide.model.AppUser.LoadUsers;
 
@@ -27,6 +26,8 @@ public class Guide {
     private final Map<Integer, GuideItem> idToCatagory = new HashMap<>();
     private final Map<String, GuideItem> nameToCatagory = new HashMap<>();
     private final Map<Integer, Resource> idToBlock = new HashMap<>();
+    private final Map<Integer, Resource> resourcesById = new HashMap<>();
+
     private final List<Catagory> catagories = new ArrayList<>();
     private final Map<String, AppUser> userMap = new HashMap<>();
 
@@ -119,14 +120,15 @@ public class Guide {
 
 
     public void removeResource(CommunityResource r) {
-
+        if(r == null)
+            return;
         GuideItem guideItem = idToCatagory.get(r.getParentId());
         Resource rx = Resource.getInstance(r, guideItem);
         if (guideItem != null) {
             guideItem.dropChild(rx);
         }
         int id = r.getId();
-        
+        resourcesById.remove(id);
 
     }
 
@@ -246,6 +248,7 @@ public class Guide {
                 }
 
                 parent.addChild(res);
+                resourcesById.put(id1, res);
 
                 ;
             }
@@ -265,7 +268,7 @@ public class Guide {
             }
         }
         loadUsers();
-        showUnlisted(testedGoodUlrs, testedBadUlrs);
+   //     showUnlisted(testedGoodUlrs, testedBadUlrs);
         loaded = true;
     }
 
@@ -398,6 +401,23 @@ public class Guide {
         for (Catagory catagory : Guide.Instance.catagories) {
             System.out.println(catagory.getName());
         }
+    }
+
+    // In Guide.java
+    public synchronized void removeFromParent(Resource r) {
+        if (r == null) return;
+        if (r.getParent() != null && r.getParent().getResources() != null) {
+            r.getParent().getResources().remove(r);
+        }
+    }
+
+    public synchronized void evictResourceCachesById(int id) {
+        // Remove from your id->resource map and any secondary indexes.
+        // No-ops are fine if id == 0.
+        resourcesById.remove(id);
+
+        // If you maintain other indexes (name, normalized name, etc.), clear those too.
+        // e.g., resourcesByName.remove(r.getName());
     }
 
 }

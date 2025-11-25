@@ -1,6 +1,7 @@
 package com.lordjoe.resource_guide.util;
 
 import com.lordjoe.resource_guide.Catagory;
+import com.lordjoe.resource_guide.Guide;
 import com.lordjoe.resource_guide.dao.CommunityResourceDAO;
 import com.lordjoe.resource_guide.dao.ResourceDescriptionDAO;
 import com.lordjoe.resource_guide.dao.ResourceSiteDAO;
@@ -29,7 +30,27 @@ public class WordDocParser {
 
     private static Set<Integer> savedItems = null;
 
+    public static void main(String[] args) throws Exception {
+        Guide g = Guide.Instance;
+        g.guaranteeLoaded();
+        for (int i = 0; i < args.length; i++) {
+            String arg = args[i];
+            if (arg.equals("Remote")) {
+                DatabaseConnection.setREMOTE();
+            }
+            else {
+                File f = new File(arg);
+                parseAndInsertDocx(f, g);
+            }
+
+        }
+    }
+
     public static void parseAndInsertDocx(File file) throws Exception {
+        parseAndInsertDocx(file, null);
+    }
+
+    public static void parseAndInsertDocx(File file, Guide g) throws Exception {
         if (file.getName().startsWith(".~lock")) return;
         if (!file.getName().endsWith(".docx")) return;
         savedItems = new HashSet<>();
@@ -41,21 +62,29 @@ public class WordDocParser {
              XWPFDocument document = new XWPFDocument(fis)) {
 
             String categoryName = file.getName().replace("_", " ").replace(".docx", "").trim();
-            Catagory category = CategoryUtils.CreateCatagory(categoryName);
-            int id = category.getId();
-              CommunityResource rs = CommunityResourceDAO.create(id, categoryName, ResourceType.Category, null);
-            resourceStack.push(rs);
-            descriptions.push(new ArrayList<>());
+            if(g != null)    {
+                Catagory category = g.getCatagoryByName(categoryName);
+                int id = category.getId();
+                CommunityResource rs = g.getResourceById(id);
+                resourceStack.push(rs);
+            }
+            else {
+                Catagory category = CategoryUtils.CreateCatagory(categoryName);
+                int id = category.getId();
+                CommunityResource rs = CommunityResourceDAO.create(id, categoryName, ResourceType.Category, null);
+                resourceStack.push(rs);
+            }
+               descriptions.push(new ArrayList<>());
             List<XWPFParagraph> paragraphs = document.getParagraphs();
             ParagraphIterator items = new ParagraphIterator(paragraphs);
 
-            handleItems(items, resourceStack,descriptions,false);
+            handleItems(items, resourceStack, descriptions, false, g);
         }
     }
 
-    private static CommunityResource  insertResource( String name,ResourceType type, int parendId) throws SQLException {
-         CommunityResource rs = CommunityResourceDAO.create(0, name, type, parendId,null);
-       return rs;
+    private static CommunityResource insertResource(String name, ResourceType type, int parendId) throws SQLException {
+        CommunityResource rs = CommunityResourceDAO.create(0, name, type, parendId, null);
+        return rs;
     }
 
     private static boolean isStruckThrough(XWPFParagraph para) {
@@ -71,7 +100,13 @@ public class WordDocParser {
     }
 
     private static void handleItems(ParagraphIterator items,
-                                    Stack<CommunityResource> resourceStack, Stack<List<String>> descriptions,  boolean inList) throws Exception {
+                                    Stack<CommunityResource> resourceStack, Stack<List<String>> descriptions, boolean inList) throws Exception {
+        handleItems(items,
+                resourceStack, descriptions, inList, null);
+    }
+
+    private static void handleItems(ParagraphIterator items,
+                                    Stack<CommunityResource> resourceStack, Stack<List<String>> descriptions, boolean inList, Guide g) throws Exception {
         CommunityResource activeResource = resourceStack.lastElement();
         List<String> currentDescriptions = descriptions.lastElement();
         List<String> phoneLines = new ArrayList<>();
@@ -100,7 +135,7 @@ public class WordDocParser {
                     continue;
                 }
 
-                if(text.contains("A program which provides day"))
+                if (text.contains("A program which provides day"))
                     System.out.println(text);
 
                 if (isBlockStart(text)) {
@@ -182,7 +217,7 @@ public class WordDocParser {
                         resourceStack.push(current);
                         descriptions.push(new ArrayList<>());
                         //     items.next();
-                        handleItems(items, resourceStack,descriptions, false);
+                        handleItems(items, resourceStack, descriptions, false);
                         continue;
                     }
 
@@ -197,7 +232,7 @@ public class WordDocParser {
                             resourceStack.push(current);
                             descriptions.push(new ArrayList<>());
                             //       items.next();
-                            handleItems(items, resourceStack,descriptions, false);
+                            handleItems(items, resourceStack, descriptions, false);
                             continue;
                         } else {
                             saveResource(activeResource, currentDescriptions, phoneLines, addressLines);
@@ -216,7 +251,7 @@ public class WordDocParser {
 
                     resourceStack.push(current);
                     descriptions.push(new ArrayList<>());
-                    handleItems(items, resourceStack,descriptions, inList);
+                    handleItems(items, resourceStack, descriptions, inList);
                     continue;
                 }
 
@@ -242,7 +277,7 @@ public class WordDocParser {
                         if (PHONE_PATTERN.matcher(text).find() ||
                                 EMAIL_PATTERN.matcher(text).find() ||
                                 URL_PATTERN.matcher(text).find() ||
-                                HoursHandler.isHours(text) ) {
+                                HoursHandler.isHours(text)) {
                             readingAddress = false;
                             // fall through to process as structured field
                         } else {
@@ -250,7 +285,7 @@ public class WordDocParser {
                             continue;
                         }
                     }
-                    if (AddressHandler.isAddress(text) ) {
+                    if (AddressHandler.isAddress(text)) {
                         addressLines.add(text);
                         readingAddress = true;
                     } else if (PHONE_PATTERN.matcher(text).find()) {
@@ -281,19 +316,33 @@ public class WordDocParser {
                     ResourceDescriptionDAO.insert(new ResourceDescription(activeResource.getId(), text, false));
                 }
             }
-            if(!resourceStack.isEmpty()) {
+            if (!resourceStack.isEmpty()) {
                 activeResource = resourceStack.lastElement();
                 // Final resource save
-                saveResource(activeResource, currentDescriptions, phoneLines, addressLines);
+                if(g != null )  {
+                    List<CommunityResource> communityResources = g.getCommunityResources();
+                    CommunityResource similar = null;
+                    for (CommunityResource communityResource : communityResources) {
+                        if(isSimilar(communityResource,activeResource))  {
+                             similar = communityResource;
+                             break;
+                        }
+                    }
+                    if(similar == null) {
+                        saveResource(activeResource, currentDescriptions, phoneLines, addressLines);
+                    }
+                   }
+                else {
+                    saveResource(activeResource, currentDescriptions, phoneLines, addressLines);
+                }
                 resourceStack.pop();
                 descriptions.pop();
             }
-        }
-        finally {
+        } finally {
             //         System.out.println("finished " + activeResource.getName());
-            while(!resourceStack.isEmpty()) {
+            while (!resourceStack.isEmpty()) {
                 int activeId = resourceStack.lastElement().getId();
-                if(activeId != activeResource.getId())
+                if (activeId != activeResource.getId())
                     break;
                 resourceStack.pop();
                 descriptions.pop();
@@ -301,9 +350,19 @@ public class WordDocParser {
         }
     }
 
+    private static boolean isSimilar(CommunityResource communityResource, CommunityResource activeResource) {
+        if(communityResource.getId() == activeResource.getId()) {
+            return true;
+        }
+        if(communityResource.getName() .equals( activeResource.getName())) {
+            return true;
+        }
+        return false;
+    }
+
     private static void printResourceStack(Stack<CommunityResource> resourceStack) {
         StringBuilder sb = new StringBuilder();
-        for(int i = 0; i < resourceStack.size(); i++) {
+        for (int i = 0; i < resourceStack.size(); i++) {
             sb.append(resourceStack.get(i).getName());
             sb.append("-->");
         }
@@ -319,15 +378,15 @@ public class WordDocParser {
         //           System.out.println(name);
 
         for (String desc : descriptions) {
-            boolean isBlock  = false;
-            if(desc.startsWith("[BLOCK]"))  {
+            boolean isBlock = false;
+            if (desc.startsWith("[BLOCK]")) {
                 desc = desc.substring("[BLOCK]".length(), desc.length());
                 isBlock = true;
             }
-            ResourceDescriptionDAO.insert(new ResourceDescription(id , desc, isBlock));
+            ResourceDescriptionDAO.insert(new ResourceDescription(id, desc, isBlock));
         }
         descriptions.clear();
-        if(savedItems.contains(id))
+        if (savedItems.contains(id))
             return;
         savedItems.add(resource.getId());
         //     System.out.println("Saving " + name);
@@ -339,8 +398,8 @@ public class WordDocParser {
                 String join = String.join("\n", addressLines);
                 resource.setAddress(join);
             }
-             CommunityResourceDAO.update(resource);
-            
+            CommunityResourceDAO.update(resource);
+
 
             if (resource.hasSiteInfo()) {
                 ResourceSite rs = new ResourceSite(resource);

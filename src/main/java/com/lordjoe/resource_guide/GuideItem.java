@@ -54,13 +54,18 @@ public class GuideItem implements Comparable<GuideItem> {
         this.type = type;
         this.parentId = parentId;
         IdToResource.put(id, this);
+        if(name.equals("Rename Me"))    {
+            description = ""; // break here
+        }
     }
 
     public void dropChild(GuideItem resource) {
-        String name = resource.getName();
-        NameToResource.remove(name);
-        resources.remove(resource);
-    }
+        if(resource != null) {
+            String name = resource.getName();
+            NameToResource.remove(name);
+            resources.remove(resource);
+        }
+     }
     public void addChild(GuideItem resource) {
         String name = resource.getName();
         resource.setParentId(id);

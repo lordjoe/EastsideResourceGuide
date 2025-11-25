@@ -14,6 +14,12 @@ import org.springframework.web.bind.annotation.ResponseBody;
 @Controller
 public class EditResourceController {
 
+    private final com.lordjoe.resource_guide.model.ResourceDraftService drafts;
+
+    public EditResourceController(com.lordjoe.resource_guide.model.ResourceDraftService drafts) {
+        this.drafts = drafts;
+    }
+
     @GetMapping("/edit-resource")
     @ResponseBody
     public String editResourcePage(@RequestParam(value = "id", required = false) Integer id,
@@ -23,11 +29,13 @@ public class EditResourceController {
         boolean isNew = (id == null || id == 0);
 
         if (isNew) {
+            String name = "new Resource";
             // NOTE: If your DAO 'create' signature differs, keep your original line.
-            CommunityResource r = CommunityResourceDAO.create(id, "", ResourceType.Resource, parentId, null);
+            CommunityResource r = CommunityResourceDAO.create(id, name , ResourceType.Resource, parentId, null);
              GuideItem parent = GuideItem.getById(parentId);
-            resource = Resource.getInstance(id,parent);
+            resource = Resource.getInstance(r.getId(),name,parent);
             resource.populateFrom(r);
+            resource.setNew(true);
         } else {
             resource = Resource.getInstance(id);
         }
@@ -35,7 +43,11 @@ public class EditResourceController {
         model.addAttribute("resource", resource);
         model.addAttribute("isNew", isNew);
         model.addAttribute("coverImage", "/Cover.png");
-        return EditResourcePageGenerator.generateEditPage(resource);
+        String draftId = null;
+        if (isNew) {
+            draftId = drafts.registerDraft(resource, parentId != null ? parentId : 0);
+        }
+        return EditResourcePageGenerator.generateEditPage(resource, draftId);
     }
 
   
