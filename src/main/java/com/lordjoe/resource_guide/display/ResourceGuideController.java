@@ -71,7 +71,7 @@ public class ResourceGuideController {
             html.append("</form></div>\n");
         }
 
-        html.append("<h1>Eastside Resource Guide</h1>");
+        html.append("<h1>Eastside Resource Guide.</h1>");
 
         html.append("<div class=\"top-categories\">");
         for (Catagory cat : categories) {

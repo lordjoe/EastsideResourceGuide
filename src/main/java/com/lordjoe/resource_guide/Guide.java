@@ -212,6 +212,8 @@ public class Guide {
         for (CommunityResource cr : allResources.values()) {
             ResourceType type = cr.getType();
             if (type == ResourceType.Resource) {
+                if(cr.getName().equals("Alpine Ridge"))
+                    System.out.println("Alpine Ridge");
                 GuideItem parent = resolveParent(cr.getParentId());
                 if (parent == null) continue;
 
@@ -326,7 +328,8 @@ public class Guide {
         if (parentId == null) return null;
         if (idToCatagory.containsKey(parentId))
             return idToCatagory.get(parentId);
-        return null;
+        Resource instance = Resource.getInstance(parentId);
+         return instance;
     }
 
     private String mergeDescriptions(List<ResourceDescription> descriptions) {

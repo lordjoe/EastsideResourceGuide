@@ -174,6 +174,106 @@ public class CommunityResourceDAO {
         }
     }
 
+    // CommunityResourceDAO.java
+
+    public static Integer findCategoryIdByName(String name) throws SQLException {
+        String sql = "SELECT id FROM community_resources WHERE name = ? AND type = ?";
+        try (Connection conn = DatabaseConnection.getConnection();
+             PreparedStatement ps = conn.prepareStatement(sql)) {
+
+            ps.setString(1, name);
+            ps.setString(2, ResourceType.Category.name());
+
+            try (ResultSet rs = ps.executeQuery()) {
+                if (rs.next()) {
+                    return rs.getInt("id");
+                }
+                return null;
+            }
+        }
+    }
+
+    /**
+     * Delete a resource and its entire subtree (all descendants),
+     * including rows in resource_sites and resource_descriptions.
+     */
+    public static void deleteSubtree(int rootId) {
+        try (Connection conn = DatabaseConnection.getConnection()) {
+            boolean oldAutoCommit = conn.getAutoCommit();
+            conn.setAutoCommit(false);
+            try {
+                deleteSubtreeInternal(conn, rootId);
+                conn.commit();
+            } catch (SQLException e) {
+                conn.rollback();
+                throw new RuntimeException("Error deleting subtree under id=" + rootId, e);
+            } finally {
+                conn.setAutoCommit(oldAutoCommit);
+            }
+        } catch (SQLException e) {
+            throw new RuntimeException("DB error deleting subtree for id=" + rootId, e);
+        }
+    }
+    /**
+     * Delete a category and all of its contents (subcategories, blocks, resources),
+     * given the category's name. No-op if the category doesn't exist.
+     */
+    public static void deleteCategoryAndContents(String categoryName) {
+        try {
+            while(true) {
+                Integer id = findCategoryIdByName(categoryName);
+                if (id == null) {
+                    return; // nothing to delete
+                }
+                deleteSubtree(id);
+
+            }
+        } catch (SQLException e) {
+            throw new RuntimeException("Error deleting category '" + categoryName + "'", e);
+        }
+    }
+
+
+    /**
+     * Recursive helper that:
+     *  1) finds all children (parent_id = resourceId),
+     *  2) recursively deletes their subtrees,
+     *  3) deletes this resourceId and its dependent rows.
+     */
+    private static void deleteSubtreeInternal(Connection conn, int resourceId) throws SQLException {
+        // 1. Recursively delete children
+        String selectChildren = "SELECT id FROM community_resources WHERE parent_id = ?";
+        try (PreparedStatement ps = conn.prepareStatement(selectChildren)) {
+            ps.setInt(1, resourceId);
+            try (ResultSet rs = ps.executeQuery()) {
+                while (rs.next()) {
+                    int childId = rs.getInt("id");
+                    deleteSubtreeInternal(conn, childId);
+                }
+            }
+        }
+
+        // 2. Delete sites and descriptions for this resourceId
+        try (PreparedStatement ps = conn.prepareStatement(
+                "DELETE FROM resource_sites WHERE resource_id = ?")) {
+            ps.setInt(1, resourceId);
+            ps.executeUpdate();
+        }
+        try (PreparedStatement ps = conn.prepareStatement(
+                "DELETE FROM resource_descriptions WHERE resource_id = ?")) {
+            ps.setInt(1, resourceId);
+            ps.executeUpdate();
+        }
+
+        // 3. Delete the resource itself
+        try (PreparedStatement ps = conn.prepareStatement(
+                "DELETE FROM community_resources WHERE id = ?")) {
+            ps.setInt(1, resourceId);
+            ps.executeUpdate();
+        }
+    }
+
+    
 
     public static void delete(int resourceId) {
         CommunityResource instance = CommunityResource.getInstance(resourceId);

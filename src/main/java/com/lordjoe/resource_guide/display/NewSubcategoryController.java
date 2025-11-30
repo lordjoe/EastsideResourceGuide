@@ -27,40 +27,82 @@ public class NewSubcategoryController {
     @GetMapping("/create-subcategory")
     @ResponseBody
     public String newSubcategoryForm(@RequestParam("parentId") int parentId) {
-           return NewSubcategoryPageGenerator.generateNewSubcategoryPage(parentId);
+        return NewSubcategoryPageGenerator.generateNewSubcategoryPage(parentId);
     }
 
     @PostMapping("/create-subcategory")
     public String createSubcategory(@RequestParam("parentId") int parentId,
                                     @RequestParam("name") String name,
-                                    @RequestParam("description") String description) throws Exception {
-        CommunityResource subcat = CommunityResourceDAO.create(0,name, ResourceType.Subcategory, parentId);
-         int insert = CommunityResourceDAO.insert(subcat);
+                                    @RequestParam(value = "description", required = false) String description) throws Exception {
+        Guide guide = Guide.Instance;
+        guide.guaranteeLoaded();   // make sure in-memory model is populated
 
-        if(description != null && description.length() > 0) {
-            ResourceDescription des = new ResourceDescription(insert,  description, false);
-            ResourceDescriptionDAO.insert(  des );
+        // Look up parent category
+        Catagory parent = guide.getCatagoryById(parentId);
+        if (parent == null) {
+            // Nothing to attach to – bail out safely
+            return "redirect:/main";
         }
-        Guide instance = Guide.Instance;
-        Catagory catagoryById = instance.getCatagoryById(parentId);
-        SubCatagory subcat1 = new SubCatagory(insert, name, catagoryById);
-        subcat1.setDescription(description);
-        catagoryById.addSubCatagory(subcat1);
-        return "redirect:/category?category=" +  URLEncoder.encode(catagoryById.getName(), StandardCharsets.UTF_8);
+
+        // Normalize / guard name
+        String trimmedName = (name == null) ? "" : name.trim();
+        if (trimmedName.isEmpty()) {
+            // No valid name -> just go back to category
+            return "redirect:/category?category=" +
+                    URLEncoder.encode(parent.getName(), StandardCharsets.UTF_8);
+        }
+
+        // At this point, the JS on the page already prevented duplicate names
+        // within this category, so we do NOT block on getCatagoryByName here.
+        CommunityResource subcr = CommunityResourceDAO.create(
+                0,
+                trimmedName,
+                ResourceType.Subcategory,
+                parentId
+        );
+        int subId = CommunityResourceDAO.insert(subcr);
+
+        // Optional description
+        if (description != null && !description.isEmpty()) {
+            ResourceDescription des = new ResourceDescription(subId, description, false);
+            ResourceDescriptionDAO.insert(des);
+        }
+
+        // Update in-memory Guide model so the new subcategory appears immediately
+        SubCatagory sub = new SubCatagory(subId, trimmedName, parent);
+        sub.setDescription(description);
+        parent.addSubCatagory(sub);
+
+        // Redirect back to the parent category page
+        return "redirect:/category?category=" +
+                URLEncoder.encode(parent.getName(), StandardCharsets.UTF_8);
     }
 
     @PostMapping("/deleteSubcategory")
-    public void deleteSubcategory(@RequestParam("subcategoryId") int id, HttpServletResponse response) throws Exception {
-        Guide instance = Guide.Instance;
-        SubCatagory subCat = instance.getSubCatagoryById(id);
+    public void deleteSubcategory(@RequestParam("subcategoryId") int id,
+                                  HttpServletResponse response) throws Exception {
+        Guide guide = Guide.Instance;
+        guide.guaranteeLoaded();
+
+        SubCatagory subCat = guide.getSubCatagoryById(id);
         if (subCat != null && subCat.getResources().isEmpty()) {
             try (Connection conn = DatabaseConnection.getConnection();
-                 PreparedStatement stmt = conn.prepareStatement("DELETE FROM community_resources WHERE id = ?")) {
+                 PreparedStatement stmt =
+                         conn.prepareStatement("DELETE FROM community_resources WHERE id = ?")) {
                 stmt.setInt(1, id);
                 stmt.executeUpdate();
             }
-            instance.reload(); // or just remove subcategory from memory if you prefer
+            guide.reload(); // or update Guide in a more granular way if you prefer
         }
-        response.sendRedirect("/category?category=" + URLEncoder.encode(subCat.getCatagory().getName(), StandardCharsets.UTF_8));
+
+        String parentName = (subCat != null && subCat.getCatagory() != null)
+                ? subCat.getCatagory().getName()
+                : "";
+        if (parentName.isEmpty()) {
+            response.sendRedirect("/main");
+        } else {
+            response.sendRedirect("/category?category=" +
+                    URLEncoder.encode(parentName, StandardCharsets.UTF_8));
+        }
     }
 }

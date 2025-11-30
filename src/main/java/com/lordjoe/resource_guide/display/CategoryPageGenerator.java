@@ -17,7 +17,7 @@ public class CategoryPageGenerator {
 
         Authentication auth = SecurityContextHolder.getContext().getAuthentication();
         boolean isAuthenticated = auth != null && auth.isAuthenticated() && !"anonymousUser".equals(auth.getPrincipal());
-        if(LocalResourceGuidsApplication.DEBUG_ADMIN_MODE)
+        if (LocalResourceGuidsApplication.DEBUG_ADMIN_MODE)
             isAuthenticated = true;
 
         StringBuilder html = new StringBuilder();
@@ -39,6 +39,11 @@ public class CategoryPageGenerator {
         html.append(".block-html p { margin: 0 0 1em 0; line-height: 1.6; }");
         html.append(".block-html b { font-weight: bold; }");
         html.append(".block-html { font-family: inherit; font-size: 1em; line-height: 1.6; color: black; }");
+        html.append(".child-list { margin-top: 15px; padding: 12px 16px; border-radius: 6px; background: #f5f7ff; border: 1px solid #e0e6f5; }");
+        html.append(".child-list-title { font-weight: bold; margin-bottom: 8px; font-size: 0.95em; color: #555; }");
+        html.append(".child-resource { margin-left: 0; padding: 8px 0; border-top: 1px solid #ddd; }");
+        html.append(".child-resource:first-child { border-top: none; }");
+        html.append(".child-resource h3 { margin-top: 0; font-size: 1.05em; }");
 
         html.append("</style>");
         html.append("</head><body>");
@@ -130,48 +135,107 @@ public class CategoryPageGenerator {
 
         Guide guide = Guide.Instance;
         String name = r.getName();
-        if(name.equals("Rename Me"))    {
-            guide = Guide.Instance; // break here
+        if (name.equals("Rename Me")) {
+            guide = Guide.Instance; // debug hook
         }
-          html.append("<div class=\"grid-item\">\n<h2>").append(escapeHtml(name)).append("</h2>");
+        if (name.equals("King County Housing Authority (KCHA)")) {
+            guide = Guide.Instance; // debug hook
+        }
 
-        if (r.getDescription() != null) html.append("<p>").append(escapeHtml(r.getDescription())).append("</p>");
-        if (r.getPhone() != null) html.append("<p><strong>Phone:</strong> ").append(escapeHtml(r.getPhone())).append("</p>");
-        if (r.getEmail() != null) html.append("<p><strong>Email:</strong> ").append(escapeHtml(r.getEmail())).append("</p>");
-        if (r.getHours() != null) html.append("<p><strong>Hours:</strong> ").append(escapeHtml(r.getHours())).append("</p>");
+        html.append("<div class=\"grid-item\">\n");
+
+        // Parent content in the main card
+        renderResourceContent(r, html, isAuthenticated, "h2");
+
+        // Children inside a separate inner box
+        List<Resource> children = r.getResources();
+        if (children != null && !children.isEmpty()) {
+            html.append("<div class=\"child-list\">");
+            // Optional label:
+            // html.append("<div class=\"child-list-title\">Related properties:</div>");
+
+            for (Resource child : children) {
+                if (child.getType() == ResourceType.Resource) {
+                    appendChildResourceHtml(child, html, isAuthenticated);
+                }
+            }
+
+            html.append("</div>"); // end .child-list
+        }
+
+        html.append("</div>"); // end .grid-item
+    }
+
+    private static void appendChildResourceHtml(Resource r, StringBuilder html, boolean isAuthenticated) {
+        if (r.getType() == ResourceType.Block)
+            return;
+
+        html.append("<div class=\"child-resource\">\n");
+        renderResourceContent(r, html, isAuthenticated, "h3");
+        html.append("</div>");
+
+        // Grandchildren become more .child-resource blocks in the same child-list
+        for (Resource child : r.getResources()) {
+            if (child.getType() == ResourceType.Resource) {
+                appendChildResourceHtml(child, html, isAuthenticated);
+            }
+        }
+    }
+
+    private static void renderResourceContent(Resource r, StringBuilder html, boolean isAuthenticated, String headingTag) {
+        String name = r.getName();
+
+        html.append("<").append(headingTag).append(">")
+                .append(escapeHtml(name))
+                .append("</").append(headingTag).append(">");
+
+        if (r.getDescription() != null)
+            html.append("<p>").append(escapeHtml(r.getDescription())).append("</p>");
+        if (r.getPhone() != null)
+            html.append("<p><strong>Phone:</strong> ").append(escapeHtml(r.getPhone())).append("</p>");
+        if (r.getEmail() != null)
+            html.append("<p><strong>Email:</strong> ").append(escapeHtml(r.getEmail())).append("</p>");
+        if (r.getHours() != null)
+            html.append("<p><strong>Hours:</strong> ").append(escapeHtml(r.getHours())).append("</p>");
+
         if (r.getWebsite() != null) {
             String[] urls = r.getWebsite().split(",");
             for (String url : urls) {
-                url = url.replace ("http://", "https://");
-                if(!url.startsWith("https://")  )
+                url = url.replace("http://", "https://");
+                if (!url.startsWith("https://"))
                     url = "https://" + url;
-                url = url.replace (" ", "%20");
+                url = url.replace(" ", "%20");
+
                 boolean valid = true;
-                if(isAuthenticated)
+                if (isAuthenticated)
                     valid = URLValidator.isValidURL(url);
 
-                 if (valid) {
-                     html.append("<p><strong>Website:</strong> ");
-                     html.append("<a href='")
+                if (valid) {
+                    html.append("<p><strong>Website:</strong> ")
+                            .append("<a href='")
                             .append(escapeHtml(url))
                             .append("' target='_blank' rel='noopener noreferrer'>")
                             .append(escapeHtml(url))
-                            .append("</a>");
+                            .append("</a></p>");
                 } else {
-                     valid = URLValidator.isValidURL(url,true,false);  // repeat to debug
-                     html.append("<p><strong>Website:</strong> ")
-                             .append("<span style='color:red;'>")
-                             .append("<a href='")
-                             .append(escapeHtml(url))
-                             .append("' target='_blank' rel='noopener noreferrer'>")
-                             .append(escapeHtml(url))
-                             .append("</a> (invalid)")
-                             .append("</span></p>");
+                    // repeat to debug if you like
+                    valid = URLValidator.isValidURL(url, true, false);
+                    html.append("<p><strong>Website:</strong> ")
+                            .append("<span style='color:red;'>")
+                            .append("<a href='")
+                            .append(escapeHtml(url))
+                            .append("' target='_blank' rel='noopener noreferrer'>")
+                            .append(escapeHtml(url))
+                            .append("</a> (invalid)")
+                            .append("</span></p>");
                 }
-           }
+            }
         }
+
         if (r.getAddress() != null) {
-            html.append("<p><strong>Address:</strong> ").append(escapeHtml(r.getAddress())).append("</p>");
+            html.append("<p><strong>Address:</strong> ")
+                    .append(escapeHtml(r.getAddress()))
+                    .append("</p>");
         }
 
         if (isAuthenticated) {
@@ -191,10 +255,8 @@ public class CategoryPageGenerator {
 
             html.append("</div>");
         }
-
-
-        html.append("</div>");
     }
+
 
     public static String escapeHtml(String input) {
         if (input == null) return "";

@@ -31,20 +31,36 @@ public class WordDocParser {
     private static Set<Integer> savedItems = null;
 
     public static void main(String[] args) throws Exception {
-        Guide g = Guide.Instance;
-        g.guaranteeLoaded();
+
         for (int i = 0; i < args.length; i++) {
             String arg = args[i];
             if (arg.equals("Remote")) {
                 DatabaseConnection.setREMOTE();
-            }
-            else {
+            } else {
                 File f = new File(arg);
+                 deleteCatagory(f);
+                Guide g = Guide.Instance;
+                g.guaranteeLoaded();
                 parseAndInsertDocx(f, g);
             }
 
         }
     }
+
+// in com.lordjoe.resource_guide.util.WordDocParser
+
+    private static void deleteCatagory(File f) throws SQLException {
+        // Derive category name from file name, same convention you use when creating categories
+        String categoryName = f.getName()
+                .replace("_", " ")
+                .replace(".docx", "")
+                .trim();
+
+        System.out.println("Deleting category and contents for: " + categoryName);
+        CommunityResourceDAO.deleteCategoryAndContents(categoryName);
+        CategoryUtils.CreateCatagory(categoryName);
+    }
+
 
     public static void parseAndInsertDocx(File file) throws Exception {
         parseAndInsertDocx(file, null);
@@ -62,19 +78,18 @@ public class WordDocParser {
              XWPFDocument document = new XWPFDocument(fis)) {
 
             String categoryName = file.getName().replace("_", " ").replace(".docx", "").trim();
-            if(g != null)    {
+            if (g != null) {
                 Catagory category = g.getCatagoryByName(categoryName);
                 int id = category.getId();
                 CommunityResource rs = g.getResourceById(id);
                 resourceStack.push(rs);
-            }
-            else {
+            } else {
                 Catagory category = CategoryUtils.CreateCatagory(categoryName);
                 int id = category.getId();
                 CommunityResource rs = CommunityResourceDAO.create(id, categoryName, ResourceType.Category, null);
                 resourceStack.push(rs);
             }
-               descriptions.push(new ArrayList<>());
+            descriptions.push(new ArrayList<>());
             List<XWPFParagraph> paragraphs = document.getParagraphs();
             ParagraphIterator items = new ParagraphIterator(paragraphs);
 
@@ -135,7 +150,7 @@ public class WordDocParser {
                     continue;
                 }
 
-                if (text.contains("A program which provides day"))
+                if (text.contains("King County Housing Authority (KCHA)"))
                     System.out.println(text);
 
                 if (isBlockStart(text)) {
@@ -232,7 +247,7 @@ public class WordDocParser {
                             resourceStack.push(current);
                             descriptions.push(new ArrayList<>());
                             //       items.next();
-                            handleItems(items, resourceStack, descriptions, false);
+                            handleItems(items, resourceStack, descriptions, true,g);
                             continue;
                         } else {
                             saveResource(activeResource, currentDescriptions, phoneLines, addressLines);
@@ -319,20 +334,19 @@ public class WordDocParser {
             if (!resourceStack.isEmpty()) {
                 activeResource = resourceStack.lastElement();
                 // Final resource save
-                if(g != null )  {
+                if (g != null) {
                     List<CommunityResource> communityResources = g.getCommunityResources();
                     CommunityResource similar = null;
                     for (CommunityResource communityResource : communityResources) {
-                        if(isSimilar(communityResource,activeResource))  {
-                             similar = communityResource;
-                             break;
+                        if (isSimilar(communityResource, activeResource)) {
+                            similar = communityResource;
+                            break;
                         }
                     }
-                    if(similar == null) {
+                    if (similar == null) {
                         saveResource(activeResource, currentDescriptions, phoneLines, addressLines);
                     }
-                   }
-                else {
+                } else {
                     saveResource(activeResource, currentDescriptions, phoneLines, addressLines);
                 }
                 resourceStack.pop();
@@ -351,10 +365,10 @@ public class WordDocParser {
     }
 
     private static boolean isSimilar(CommunityResource communityResource, CommunityResource activeResource) {
-        if(communityResource.getId() == activeResource.getId()) {
+        if (communityResource.getId() == activeResource.getId()) {
             return true;
         }
-        if(communityResource.getName() .equals( activeResource.getName())) {
+        if (communityResource.getName().equals(activeResource.getName())) {
             return true;
         }
         return false;
