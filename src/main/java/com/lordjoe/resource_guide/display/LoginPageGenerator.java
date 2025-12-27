@@ -21,6 +21,13 @@ public class LoginPageGenerator {
         html.append(".error-msg { color:red; margin-bottom:10px; }\n");
         html.append(".logout-msg { color:green; margin-bottom:10px; }\n");
         html.append(".forgot-password { margin-top:30px; font-size:14px; }\n");
+
+        // NEW: password show/hide styles
+        html.append(".password-container { display:flex; align-items:center; gap:8px; margin:0 0 10px 0; }\n");
+        html.append(".password-container input { flex:1; margin:0; }\n");
+        html.append(".toggle-password { padding:8px 10px; font-size:12px; background-color:#ddd; color:#000; border:1px solid #aaa; border-radius:6px; cursor:pointer; }\n");
+        html.append(".toggle-password:hover { background-color:#ccc; }\n");
+
         html.append("</style>\n");
         html.append("</head>\n<body>\n");
 
@@ -42,13 +49,19 @@ public class LoginPageGenerator {
         html.append("  <label for='username'>Email</label>\n");
         html.append("  <input type='email' id='username' name='username' inputmode='email' ")
                 .append("autocomplete='username' placeholder='you@example.com' required autofocus>\n");
+
         html.append("  <label for='password'>Password</label>\n");
-        html.append("  <input type='password' id='password' name='password' ")
+        // NEW: wrap password + button
+        html.append("  <div class='password-container'>\n");
+        html.append("    <input type='password' id='password' name='password' ")
                 .append("autocomplete='current-password' placeholder='Your password' required>\n");
+        html.append("    <button type='button' id='togglePassword' class='toggle-password'>Show</button>\n");
+        html.append("  </div>\n");
+
         html.append("  <button type='submit'>Login</button>\n");
         html.append("</form>\n");
 
-        // FORGOT PASSWORD — separate form; won’t confuse PMs (no password field)
+        // FORGOT PASSWORD — separate form
         html.append("<div class='forgot-password'>\n");
         html.append("  <form method='post' action='/forgot-password' autocomplete='on'>\n");
         if (csrfParam != null && csrfValue != null) {
@@ -63,12 +76,31 @@ public class LoginPageGenerator {
         html.append("</div>\n");
 
         html.append("</div>\n");
+
+        // NEW: small JS to toggle password visibility
+        html.append("<script>\n");
+        html.append("  (function() {\n");
+        html.append("    var toggle = document.getElementById('togglePassword');\n");
+        html.append("    var pwd = document.getElementById('password');\n");
+        html.append("    if (toggle && pwd) {\n");
+        html.append("      toggle.addEventListener('click', function() {\n");
+        html.append("        var isPassword = pwd.type === 'password';\n");
+        html.append("        pwd.type = isPassword ? 'text' : 'password';\n");
+        html.append("        this.textContent = isPassword ? 'Hide' : 'Show';\n");
+        html.append("      });\n");
+        html.append("    }\n");
+        html.append("  })();\n");
+        html.append("</script>\n");
+
         html.append("</body>\n</html>");
         return html.toString();
     }
 
     private static String escape(String s) {
         if (s == null) return "";
-        return s.replace("&", "&amp;").replace("\"", "&quot;").replace("<", "&lt;").replace(">", "&gt;");
+        return s.replace("&", "&amp;")
+                .replace("\"", "&quot;")
+                .replace("<", "&lt;")
+                .replace(">", "&gt;");
     }
 }

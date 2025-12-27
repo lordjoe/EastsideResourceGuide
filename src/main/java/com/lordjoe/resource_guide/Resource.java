@@ -97,6 +97,7 @@ public class Resource extends GuideItem {
         website = r.getWebsite();
         hours = r.getHours(); // Added this line
         notes = r.getNotes();
+        setName(r.getName());
     }
 
     public int getId() {

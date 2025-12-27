@@ -246,12 +246,14 @@ public class CategoryPageGenerator {
                     .append("<input type='hidden' name='parentId' value='").append(r.getParentId()).append("'/>")
                     .append("<button type='submit'>Edit</button>")
                     .append("</form>");
-
-            html.append("<form method='post' action='/delete-resource' style='margin:0;'>")
-                    .append("<input type='hidden' name='id' value='").append(r.getId()).append("'/>")
-                    .append("<input type='hidden' name='parentId' value='").append(r.getParentId()).append("'/>")
-                    .append("<button type='submit'>Delete</button>")
-                    .append("</form>");
+            // don't delete subresopurces
+            if(headingTag.equals("h2")) {
+                html.append("<form method='post' action='/delete-resource' style='margin:0;'>")
+                        .append("<input type='hidden' name='id' value='").append(r.getId()).append("'/>")
+                        .append("<input type='hidden' name='parentId' value='").append(r.getParentId()).append("'/>")
+                        .append("<button type='submit'>Delete</button>")
+                        .append("</form>");
+            }
 
             html.append("</div>");
         }

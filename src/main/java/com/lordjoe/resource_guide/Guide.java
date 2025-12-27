@@ -50,13 +50,14 @@ public class Guide {
         return userMap.get(email);
     }
 
-    public void reload() {
+    public synchronized void reload() {
         if (loaded) {
             loaded = false;
             idToCatagory.clear();
             userMap.clear();
             idToBlock.clear();
             nameToCatagory.clear();
+            resourcesById.clear();
         }
         guaranteeLoaded();
     }
@@ -168,14 +169,22 @@ public class Guide {
         Set<String> testedGoodUlrs = new HashSet<>();
         Set<String> testedBadUlrs = new HashSet<>();
 
-        createDatabase(); // make sure tablews exist
+        createDatabase(); // make sure tables exist
+
+        catagories.clear();
+        idToCatagory.clear();
+        nameToCatagory.clear();
+        resourcesById.clear();
+        idToBlock.clear();
         // First pass: categories and subcategories
         for (CommunityResource cr : allResources.values()) {
             ResourceType type = cr.getType();
             switch (type) {
                 case Category -> {
                     String name = cr.getName();
-                    Catagory cat = new Catagory(cr.getId(), name);
+                    Catagory cat = getCatagoryByName(name);
+                    if(cat == null)
+                         cat = new Catagory(cr.getId(), name);
                     int id = cr.getId();
                     List<ResourceDescription> descriptions1 = descriptions.get(id);
                     String description = mergeDescriptions(descriptions1);
@@ -193,10 +202,13 @@ public class Guide {
                     Catagory parent = (Catagory) parentX;
                     String name = cr.getName();
                     int id1 = cr.getId();
-                    SubCatagory sub = new SubCatagory(id1, name, parent);
+                    SubCatagory sub  = (SubCatagory)parent.getSubCatagory(name);
+                    if(sub == null) {
+                        sub = new SubCatagory(id1, name, parent);
+                        parent.addSubCatagory(sub);
+                    }
                     idToCatagory.put(id1, sub);
-                    parent.addSubCatagory(sub);
-                    List<ResourceDescription> descriptions1 = descriptions.get(id1);
+                     List<ResourceDescription> descriptions1 = descriptions.get(id1);
                     String description = mergeDescriptions(descriptions1);
                     sub.setDescription(description);
                     List<ResourceDescription> blocks = blockd.get(id1);

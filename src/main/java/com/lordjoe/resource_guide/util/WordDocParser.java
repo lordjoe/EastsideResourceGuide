@@ -34,7 +34,7 @@ public class WordDocParser {
 
         for (int i = 0; i < args.length; i++) {
             String arg = args[i];
-            if (arg.equals("Remote")) {
+            if (arg.equalsIgnoreCase("Remote")) {
                 DatabaseConnection.setREMOTE();
             } else {
                 File f = new File(arg);

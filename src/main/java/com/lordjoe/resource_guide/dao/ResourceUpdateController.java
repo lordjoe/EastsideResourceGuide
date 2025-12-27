@@ -124,7 +124,9 @@ public class ResourceUpdateController {
 
         Catagory catagoryById = Guide.Instance.getCatagoryById(parentId);
         GuideItem res = Resource.getById(id);
-        catagoryById.dropChild(res);
+        if(res != null) {
+            catagoryById.dropChild(res);
+        }
 
         Guide.Instance.removeResource(cr);
         // Delete from database

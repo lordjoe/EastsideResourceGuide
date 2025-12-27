@@ -33,6 +33,12 @@ public class ResourceGuideController {
         response.sendRedirect("/login");
     }
 
+    @GetMapping("/main/reload")
+    public void reload(HttpServletResponse response) throws IOException {
+        Guide.Instance.reload();
+        response.sendRedirect("/main");
+    }
+
     @GetMapping("/main")
     @ResponseBody
     public String mainContent(HttpServletRequest request) {
@@ -60,7 +66,7 @@ public class ResourceGuideController {
         StringBuilder html = new StringBuilder();
         html.append("<html><head>");
         html.append("  <link rel=\"icon\" type=\"image/x-icon\" href=\"/favicon.ico\">\n");
-        html.append("  <title>Eastside Resource Guide</title>\n");
+        html.append("  <title>Eastside Resource Guide.</title>\n");
         addCSS(html);
         html.append("</head><body>");
 

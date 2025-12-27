@@ -8,7 +8,6 @@ import com.lordjoe.resource_guide.dao.ResourceDescriptionDAO;
 import com.lordjoe.resource_guide.dao.ResourceType;
 import com.lordjoe.resource_guide.model.CommunityResource;
 import com.lordjoe.resource_guide.model.ResourceDescription;
-import com.lordjoe.resource_guide.util.DatabaseConnection;
 import jakarta.servlet.http.HttpServletResponse;
 import org.springframework.stereotype.Controller;
 import org.springframework.web.bind.annotation.GetMapping;
@@ -18,8 +17,6 @@ import org.springframework.web.bind.annotation.ResponseBody;
 
 import java.net.URLEncoder;
 import java.nio.charset.StandardCharsets;
-import java.sql.Connection;
-import java.sql.PreparedStatement;
 
 @Controller
 public class NewSubcategoryController {
@@ -77,7 +74,6 @@ public class NewSubcategoryController {
         return "redirect:/category?category=" +
                 URLEncoder.encode(parent.getName(), StandardCharsets.UTF_8);
     }
-
     @PostMapping("/deleteSubcategory")
     public void deleteSubcategory(@RequestParam("subcategoryId") int id,
                                   HttpServletResponse response) throws Exception {
@@ -85,24 +81,24 @@ public class NewSubcategoryController {
         guide.guaranteeLoaded();
 
         SubCatagory subCat = guide.getSubCatagoryById(id);
-        if (subCat != null && subCat.getResources().isEmpty()) {
-            try (Connection conn = DatabaseConnection.getConnection();
-                 PreparedStatement stmt =
-                         conn.prepareStatement("DELETE FROM community_resources WHERE id = ?")) {
-                stmt.setInt(1, id);
-                stmt.executeUpdate();
-            }
-            guide.reload(); // or update Guide in a more granular way if you prefer
+
+        // Figure out where to redirect AFTER deletion
+        String redirectUrl = "/main";
+        if (subCat != null && subCat.getCatagory() != null) {
+            String parentName = subCat.getCatagory().getName();
+            redirectUrl = "/category?category=" +
+                    URLEncoder.encode(parentName, StandardCharsets.UTF_8);
         }
 
-        String parentName = (subCat != null && subCat.getCatagory() != null)
-                ? subCat.getCatagory().getName()
-                : "";
-        if (parentName.isEmpty()) {
-            response.sendRedirect("/main");
-        } else {
-            response.sendRedirect("/category?category=" +
-                    URLEncoder.encode(parentName, StandardCharsets.UTF_8));
+        if (subCat != null) {
+            // Delete the subcategory and ALL of its children + descriptions + sites
+            CommunityResourceDAO.deleteSubtree(id);
+
+            // Rebuild in-memory Guide so the subcategory and its resources disappear
+            guide.reload();
         }
+
+        response.sendRedirect(redirectUrl);
     }
+
 }

@@ -64,7 +64,7 @@ public class ColorMap {
         addColor("Veterans Services & Information", new Color(31, 97, 141));
         addColor("Veterans Services & Info", new Color(31, 97, 141));
         addColor("Introduction", new Color(255,255,255));
-        addColor("Unclassifiec", new Color(255,255,255));
-
+        addColor("Unclassified", new Color(255,255,255));
+        addColor("Gay, Lesbian and Trans", new Color(150,0,150));
     }
 }
